@@ -14,12 +14,13 @@ import DataLoader from 'Components/data-loader';
 import ProfileContainer from 'Components/profile-container';
 import Emoji from 'Components/images/emoji';
 import TeamUsers from 'Components/team-users';
+import { getLink, currentUserIsOnTeam, currentUserIsTeamAdmin } from 'Models/team';
+
 
 import { AnalyticsContext } from '../segment-analytics';
 import { useAPI } from '../../state/api';
 import { useCurrentUser } from '../../state/current-user';
 import TeamEditor from '../team-editor';
-import { getLink } from '../../models/team';
 import AuthDescription from '../includes/auth-description';
 import ErrorBoundary from '../includes/error-boundary';
 import { captureException } from '../../utils/sentry';
@@ -98,15 +99,18 @@ class TeamPage extends React.Component {
   }
 
   getProjectOptions() {
+    const { currentUser, team, deleteProject, leaveTeamProject, removeProject, joinTeamProject, featureProject } = this.props;
     const projectOptions = {
       addProjectToCollection: this.addProjectToCollection,
-      deleteProject: deleteProject,
-      leaveTeamProject: leaveTeamProject,
+      deleteProject,
+      leaveTeamProject,
     };
     if (currentUserIsOnTeam({ currentUser, team })) {
-      projectOptions.removeProjectFromTeam = removeProject;
-      projectOptions.joinTeamProject = joinTeamProject;
-      projectOptions.featureProject = featureProject;
+      Object.assign(projectOptions, {
+        removeProjectFromTeam: removeProject,
+        joinTeamProject,
+        featureProject,
+      });
     }
 
     return projectOptions;
@@ -130,17 +134,34 @@ class TeamPage extends React.Component {
   }
 
   async addProjectToCollection(project, collection) {
-    await api.patch(`collections/${collection.id}/add/${project.id}`);
+    await this.props.api.patch(`collections/${collection.id}/add/${project.id}`);
   }
 
   render() {
-    const { team } = this.props;
+    const {
+      api,
+      currentUser,
+      team,
+      uploadCover,
+      clearCover,
+      uploadAvatar,
+      updateName,
+      updateUrl,
+      updateDescription,
+      unfeatureProject,
+      addProjectToCollection,
+      removePin,
+      addPin,
+      addProject
+    } = this.props;
     const pinnedSet = new Set(team.teamPins.map(({ projectId }) => projectId));
     // filter featuredProject out of both pinned & recent projects
     const [pinnedProjects, recentProjects] = partition(team.projects.filter(({ id }) => id !== team.featuredProjectId), ({ id }) =>
       pinnedSet.has(id),
     );
     const featuredProject = team.projects.find(({ id }) => id === team.featuredProjectId);
+    const isTeamAdmin = currentUserIsTeamAdmin({ currentUser, team })
+    const isOnTeam = currentUserIsOnTeam({ currentUser, team })
 
     return (
       <main className={styles.container}>
@@ -150,14 +171,14 @@ class TeamPage extends React.Component {
             item={team}
             type="team"
             coverActions={{
-              'Upload Cover': currentUserIsTeamAdmin ? uploadCover : null,
-              'Clear Cover': currentUserIsTeamAdmin && team.hasCoverImage ? clearCover : null,
+              'Upload Cover': isTeamAdmin ? uploadCover : null,
+              'Clear Cover': isTeamAdmin && team.hasCoverImage ? clearCover : null,
             }}
             avatarActions={{
-              'Upload Avatar': currentUserIsTeamAdmin ? uploadAvatar : null,
+              'Upload Avatar': isTeamAdmin ? uploadAvatar : null,
             }}
           >
-            {currentUserIsTeamAdmin ? (
+            {isTeamAdmin ? (
               <TeamNameUrlFields team={team} updateName={updateName} updateUrl={updateUrl} />
             ) : (
               <>
@@ -168,14 +189,11 @@ class TeamPage extends React.Component {
               </>
             )}
             <div className={styles.usersInformation}>
-              <TeamUsers
-                {...this.props}
-                invitees={this.state.invitees}
-              />
+              <TeamUsers {...this.props} invitees={this.state.invitees} />
             </div>
             <Thanks count={team.users.reduce((total, { thanksCount }) => total + thanksCount, 0)} />
             <AuthDescription
-              authorized={currentUserIsTeamAdmin}
+              authorized={isTeamAdmin}
               description={team.description}
               update={updateDescription}
               placeholder="Tell us about your team"
@@ -190,7 +208,7 @@ class TeamPage extends React.Component {
         {featuredProject && (
           <FeaturedProject
             featuredProject={featuredProject}
-            isAuthorized={currentUserIsOnTeam}
+            isAuthorized={isOnTeam}
             unfeatureProject={unfeatureProject}
             addProjectToCollection={addProjectToCollection}
             currentUser={currentUser}
@@ -206,10 +224,10 @@ class TeamPage extends React.Component {
               </>
             }
             projects={pinnedProjects}
-            isAuthorized={currentUserIsOnTeam}
+            isAuthorized={isOnTeam}
             removePin={removePin}
             projectOptions={{
-              removePin: currentUserIsOnTeam ? removePin : undefined,
+              removePin: isOnTeam ? removePin : undefined,
               ...this.getProjectOptions(),
             }}
           />
@@ -220,17 +238,17 @@ class TeamPage extends React.Component {
           <ProjectsList
             title="Recent Projects"
             projects={recentProjects}
-            isAuthorized={currentUserIsOnTeam}
+            isAuthorized={isOnTeam}
             enablePagination
             enableFiltering={recentProjects.length > 6}
             projectOptions={{
-              addPin: currentUserIsOnTeam ? addPin : undefined,
+              addPin: isOnTeam ? addPin : undefined,
               ...this.getProjectOptions(),
             }}
           />
         )}
 
-        {team.projects.length === 0 && currentUserIsOnTeam && <ProjectPals />}
+        {team.projects.length === 0 && isOnTeam && <ProjectPals />}
 
         {/* TEAM COLLECTIONS */}
         <ErrorBoundary>
@@ -242,11 +260,11 @@ class TeamPage extends React.Component {
           </DataLoader>
         </ErrorBoundary>
 
-        {currentUserIsOnTeam && (
+        {isOnTeam && (
           <ErrorBoundary>
             <TeamAnalytics
               id={team.id}
-              currentUserIsOnTeam={currentUserIsOnTeam}
+              currentUserIsOnTeam={isOnTeam}
               projects={team.projects}
               addProject={addProject}
               myProjects={currentUser ? currentUser.projects : []}
@@ -254,9 +272,9 @@ class TeamPage extends React.Component {
           </ErrorBoundary>
         )}
 
-        {currentUserIsTeamAdmin && <DeleteTeam team={team} users={team.users} />}
+        {isTeamAdmin && <DeleteTeam team={team} users={team.users} />}
 
-        {!currentUserIsOnTeam && (
+        {!isOnTeam && (
           <>
             <ReportButton reportedType="team" reportedModel={team} />
             <TeamMarketing />
@@ -367,13 +385,7 @@ const TeamPageContainer = ({ team, ...props }) => {
         {(teamFromEditor, funcs) => (
           <>
             <Helmet title={teamFromEditor.name} />
-            <TeamPage
-              api={api}
-              team={teamFromEditor}
-              {...funcs}
-              currentUser={currentUser}
-              {...props}
-            />
+            <TeamPage api={api} team={teamFromEditor} {...funcs} currentUser={currentUser} {...props} />
             <TeamNameConflict team={teamFromEditor} />
           </>
         )}
