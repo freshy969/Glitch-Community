@@ -88,7 +88,6 @@ class TeamPage extends React.Component {
     this.state = {
       invitees: [],
     };
-    this.teamAdmins = this.teamAdmins.bind(this);
     this.getInvitees = this.getInvitees.bind(this);
     this.addProjectToCollection = this.addProjectToCollection.bind(this);
   }
@@ -101,22 +100,23 @@ class TeamPage extends React.Component {
   getProjectOptions() {
     const projectOptions = {
       addProjectToCollection: this.addProjectToCollection,
-      deleteProject: this.props.deleteProject,
-      leaveTeamProject: this.props.leaveTeamProject,
+      deleteProject: deleteProject,
+      leaveTeamProject: leaveTeamProject,
     };
-    if (this.props.currentUserIsOnTeam) {
-      projectOptions.removeProjectFromTeam = this.props.removeProject;
-      projectOptions.joinTeamProject = this.props.joinTeamProject;
-      projectOptions.featureProject = this.props.featureProject;
+    if (currentUserIsOnTeam({ currentUser, team })) {
+      projectOptions.removeProjectFromTeam = removeProject;
+      projectOptions.joinTeamProject = joinTeamProject;
+      projectOptions.featureProject = featureProject;
     }
 
     return projectOptions;
   }
 
   async getInvitees() {
-    if (this.props.currentUserIsOnTeam) {
+    const { currentUser, team, api } = this.props;
+    if (currentUserIsOnTeam({ currentUser, team })) {
       try {
-        const data = await Promise.all(this.props.team.tokens.map(({ userId }) => this.props.api.get(`users/${userId}`)));
+        const data = await Promise.all(team.tokens.map(({ userId }) => api.get(`users/${userId}`)));
         const invitees = data.map((user) => user.data).filter((user) => !!user);
         return invitees;
       } catch (error) {
@@ -129,20 +129,8 @@ class TeamPage extends React.Component {
     return [];
   }
 
-  userCanJoinTeam() {
-    const { currentUser, team } = this.props;
-    if (!this.props.currentUserIsOnTeam && team.whitelistedDomain && currentUser && currentUser.emails) {
-      return currentUser.emails.some(({ email, verified }) => verified && email.endsWith(`@${team.whitelistedDomain}`));
-    }
-    return false;
-  }
-
-  teamAdmins() {
-    return this.props.team.users.filter((user) => this.props.team.adminIds.includes(user.id));
-  }
-
   async addProjectToCollection(project, collection) {
-    await this.props.api.patch(`collections/${collection.id}/add/${project.id}`);
+    await api.patch(`collections/${collection.id}/add/${project.id}`);
   }
 
   render() {
@@ -162,15 +150,15 @@ class TeamPage extends React.Component {
             item={team}
             type="team"
             coverActions={{
-              'Upload Cover': this.props.currentUserIsTeamAdmin ? this.props.uploadCover : null,
-              'Clear Cover': this.props.currentUserIsTeamAdmin && team.hasCoverImage ? this.props.clearCover : null,
+              'Upload Cover': currentUserIsTeamAdmin ? uploadCover : null,
+              'Clear Cover': currentUserIsTeamAdmin && team.hasCoverImage ? clearCover : null,
             }}
             avatarActions={{
-              'Upload Avatar': this.props.currentUserIsTeamAdmin ? this.props.uploadAvatar : null,
+              'Upload Avatar': currentUserIsTeamAdmin ? uploadAvatar : null,
             }}
           >
-            {this.props.currentUserIsTeamAdmin ? (
-              <TeamNameUrlFields team={team} updateName={this.props.updateName} updateUrl={this.props.updateUrl} />
+            {currentUserIsTeamAdmin ? (
+              <TeamNameUrlFields team={team} updateName={updateName} updateUrl={updateUrl} />
             ) : (
               <>
                 <Heading tagName="h1">
@@ -183,14 +171,13 @@ class TeamPage extends React.Component {
               <TeamUsers
                 {...this.props}
                 invitees={this.state.invitees}
-                userCanJoinTeam={this.userCanJoinTeam()}
               />
             </div>
             <Thanks count={team.users.reduce((total, { thanksCount }) => total + thanksCount, 0)} />
             <AuthDescription
-              authorized={this.props.currentUserIsTeamAdmin}
+              authorized={currentUserIsTeamAdmin}
               description={team.description}
-              update={this.props.updateDescription}
+              update={updateDescription}
               placeholder="Tell us about your team"
             />
           </ProfileContainer>
@@ -203,10 +190,10 @@ class TeamPage extends React.Component {
         {featuredProject && (
           <FeaturedProject
             featuredProject={featuredProject}
-            isAuthorized={this.props.currentUserIsOnTeam}
-            unfeatureProject={this.props.unfeatureProject}
-            addProjectToCollection={this.props.addProjectToCollection}
-            currentUser={this.props.currentUser}
+            isAuthorized={currentUserIsOnTeam}
+            unfeatureProject={unfeatureProject}
+            addProjectToCollection={addProjectToCollection}
+            currentUser={currentUser}
           />
         )}
 
@@ -219,10 +206,10 @@ class TeamPage extends React.Component {
               </>
             }
             projects={pinnedProjects}
-            isAuthorized={this.props.currentUserIsOnTeam}
-            removePin={this.props.removePin}
+            isAuthorized={currentUserIsOnTeam}
+            removePin={removePin}
             projectOptions={{
-              removePin: this.props.currentUserIsOnTeam ? this.props.removePin : undefined,
+              removePin: currentUserIsOnTeam ? removePin : undefined,
               ...this.getProjectOptions(),
             }}
           />
@@ -233,43 +220,43 @@ class TeamPage extends React.Component {
           <ProjectsList
             title="Recent Projects"
             projects={recentProjects}
-            isAuthorized={this.props.currentUserIsOnTeam}
+            isAuthorized={currentUserIsOnTeam}
             enablePagination
             enableFiltering={recentProjects.length > 6}
             projectOptions={{
-              addPin: this.props.currentUserIsOnTeam ? this.props.addPin : undefined,
+              addPin: currentUserIsOnTeam ? addPin : undefined,
               ...this.getProjectOptions(),
             }}
           />
         )}
 
-        {team.projects.length === 0 && this.props.currentUserIsOnTeam && <ProjectPals />}
+        {team.projects.length === 0 && currentUserIsOnTeam && <ProjectPals />}
 
         {/* TEAM COLLECTIONS */}
         <ErrorBoundary>
           <DataLoader
-            get={() => this.props.api.get(`collections?teamId=${team.id}`)}
+            get={() => api.get(`collections?teamId=${team.id}`)}
             renderLoader={() => <TeamPageCollections {...this.props} collections={team.collections} />}
           >
             {({ data }) => <TeamPageCollections {...this.props} collections={data} />}
           </DataLoader>
         </ErrorBoundary>
 
-        {this.props.currentUserIsOnTeam && (
+        {currentUserIsOnTeam && (
           <ErrorBoundary>
             <TeamAnalytics
               id={team.id}
-              currentUserIsOnTeam={this.props.currentUserIsOnTeam}
+              currentUserIsOnTeam={currentUserIsOnTeam}
               projects={team.projects}
-              addProject={this.props.addProject}
-              myProjects={this.props.currentUser ? this.props.currentUser.projects : []}
+              addProject={addProject}
+              myProjects={currentUser ? currentUser.projects : []}
             />
           </ErrorBoundary>
         )}
 
-        {this.props.currentUserIsTeamAdmin && <DeleteTeam team={team} users={team.users} />}
+        {currentUserIsTeamAdmin && <DeleteTeam team={team} users={team.users} />}
 
-        {!this.props.currentUserIsOnTeam && (
+        {!currentUserIsOnTeam && (
           <>
             <ReportButton reportedType="team" reportedModel={team} />
             <TeamMarketing />
@@ -336,7 +323,7 @@ const TeamNameConflict = ({ team }) => {
 };
 const TeamPageEditor = ({ initialTeam, children }) => (
   <TeamEditor initialTeam={initialTeam}>
-    {(team, funcs, ...args) => (
+    {(team, funcs) => (
       <ProjectsLoader projects={team.projects}>
         {(projects, reloadProjects) => {
           // Inject page specific changes to the editor
@@ -365,7 +352,6 @@ const TeamPageEditor = ({ initialTeam, children }) => (
               joinTeamProject,
               leaveTeamProject,
             },
-            ...args,
           );
         }}
       </ProjectsLoader>
@@ -378,7 +364,7 @@ const TeamPageContainer = ({ team, ...props }) => {
   return (
     <AnalyticsContext properties={{ origin: 'team' }} context={{ groupId: team.id.toString() }}>
       <TeamPageEditor initialTeam={team}>
-        {(teamFromEditor, funcs, currentUserIsOnTeam, currentUserIsTeamAdmin) => (
+        {(teamFromEditor, funcs) => (
           <>
             <Helmet title={teamFromEditor.name} />
             <TeamPage
@@ -386,8 +372,6 @@ const TeamPageContainer = ({ team, ...props }) => {
               team={teamFromEditor}
               {...funcs}
               currentUser={currentUser}
-              currentUserIsOnTeam={currentUserIsOnTeam}
-              currentUserIsTeamAdmin={currentUserIsTeamAdmin}
               {...props}
             />
             <TeamNameConflict team={teamFromEditor} />

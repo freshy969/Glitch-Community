@@ -22,12 +22,6 @@ class TeamEditor extends React.Component {
     };
   }
 
-  currentUserIsOnTeam() {
-    if (!this.props.currentUser) return false;
-    const currentUserId = this.props.currentUser.id;
-    return this.state.users.some(({ id }) => currentUserId === id);
-  }
-
   async updateFields(changes) {
     const { data } = await this.props.api.patch(`teams/${this.state.id}`, changes);
     this.setState(data);
@@ -199,15 +193,6 @@ class TeamEditor extends React.Component {
     await this.updateFields({ featured_project_id: id });
   }
 
-  currentUserIsTeamAdmin() {
-    if (!this.props.currentUser) return false;
-    const currentUserId = this.props.currentUser.id;
-    if (this.state.adminIds.includes(currentUserId)) {
-      return true;
-    }
-    return false;
-  }
-
   render() {
     const { handleError, handleErrorForInput, handleCustomError } = this.props;
     const funcs = {
@@ -234,7 +219,7 @@ class TeamEditor extends React.Component {
       featureProject: (id) => this.featureProject(id).catch(handleError),
       unfeatureProject: (id) => this.unfeatureProject(id).catch(handleError),
     };
-    return this.props.children(this.state, funcs, this.currentUserIsOnTeam(), this.currentUserIsTeamAdmin());
+    return this.props.children(this.state, funcs);
   }
 }
 TeamEditor.propTypes = {
