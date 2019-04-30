@@ -5,13 +5,15 @@ import { uniqBy } from 'lodash';
 import TooltipContainer from 'Components/tooltips/tooltip-container';
 import { UserAvatar } from 'Components/images/avatar';
 import { UserLink } from 'Components/link';
-import { getDisplayName } from '../../models/user';
+import { getDisplayName } from 'Models/user';
+import { currentUserIsOnTeam } from 'Models/team';
 import { useTracker } from '../segment-analytics';
 import { WhitelistedDomainIcon } from './team-elements';
 import AddTeamUserPop from '../pop-overs/add-team-user-pop';
 import PopoverWithButton from '../pop-overs/popover-with-button';
 import PopoverContainer from '../pop-overs/popover-container';
 import TeamUserInfoPop from '../pop-overs/team-user-info-pop';
+import { createAPIHook } from '../../state/api';
 
 // Team Users list (in profile container)
 
@@ -205,6 +207,12 @@ export const JoinTeam = ({ onClick }) => (
   </button>
 );
 
+const useInvitees = createAPIHook(async (api, team, currentUser) => {
+  if (!currentUserIsOnTeam({ currentUser, team })) return []
+  const data = await Promise.all(team.tokens.map(({ userId }) => api.get(`users/${userId}`)));
+  return data.map((user) => user.data).filter((user) => !!user);
+});
+
 const TeamUsersContainer = ({
   team,
   currentUserIsTeamAdmin,
@@ -237,19 +245,6 @@ const TeamUsersContainer = ({
 
 export default TeamUsersContainer;
 
-  async function getInvitees() {
-    const { currentUser, team, api } = this.props;
-    if (currentUserIsOnTeam({ currentUser, team })) {
-      try {
-        const data = await Promise.all(team.tokens.map(({ userId }) => api.get(`users/${userId}`)));
-        const invitees = data.map((user) => user.data).filter((user) => !!user);
-        return invitees;
-      } catch (error) {
-        if (error && error.response && error.response.status === 404) {
-          return null;
-        }
-        captureException(error);
-      }
-    }
-    return [];
-  }
+async function getInvitees() {
+  const { currentUser, team, api } = this.props;
+}

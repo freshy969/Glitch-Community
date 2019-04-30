@@ -51,15 +51,17 @@ const TeamNameUrlFields = ({ team, updateName, updateUrl }) => (
   </>
 );
 
-const TeamPageCollections = ({ collections, team, currentUser, currentUserIsOnTeam }) => (
-  <CollectionsList
-    title="Collections"
-    collections={collections.map((collection) => ({ ...collection, team }))}
-    maybeCurrentUser={currentUser}
-    maybeTeam={team}
-    isAuthorized={currentUserIsOnTeam}
-  />
-);
+const TeamPageCollections = ({ collections, team }) => {
+  const { currentUser } = useCurrentUser();
+  return (
+    <CollectionsList
+      title="Collections"
+      collections={collections.map((collection) => ({ ...collection, team }))}
+      maybeTeam={team}
+      isAuthorized={currentUserIsOnTeam({ currentUser, team })}
+    />
+  );
+};
 
 const Beta = () => (
   <a href="/teams/" target="_blank" className={styles.beta}>
@@ -158,7 +160,7 @@ function TeamPage({
       </section>
 
       <ErrorBoundary>
-        <AddTeamProject teamProjects={team.projects} />
+        <AddTeamProject addProject={addProject} teamProjects={team.projects} />
       </ErrorBoundary>
 
       {featuredProject && (
@@ -208,8 +210,11 @@ function TeamPage({
 
       {/* TEAM COLLECTIONS */}
       <ErrorBoundary>
-        <DataLoader get={() => api.get(`collections?teamId=${team.id}`)} renderLoader={() => <TeamPageCollections collections={team.collections} />}>
-          {({ data }) => <TeamPageCollections collections={data} />}
+        <DataLoader
+          get={() => api.get(`collections?teamId=${team.id}`)}
+          renderLoader={() => <TeamPageCollections collections={team.collections} team={team} />}
+        >
+          {({ data }) => <TeamPageCollections collections={data} team={team} />}
         </DataLoader>
       </ErrorBoundary>
 
