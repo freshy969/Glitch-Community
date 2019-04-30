@@ -16,7 +16,6 @@ import Emoji from 'Components/images/emoji';
 import TeamUsers from 'Components/team-users';
 import { getLink, currentUserIsOnTeam, currentUserIsTeamAdmin } from 'Models/team';
 
-
 import { AnalyticsContext } from '../segment-analytics';
 import { useAPI } from '../../state/api';
 import { useCurrentUser } from '../../state/current-user';
@@ -83,206 +82,159 @@ const ProjectPals = () => (
 
 // Team Page
 
-class TeamPage extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      invitees: [],
-    };
-    this.getInvitees = this.getInvitees.bind(this);
-    this.addProjectToCollection = this.addProjectToCollection.bind(this);
+function TeamPage({
+  api,
+  currentUser,
+  team,
+  uploadCover,
+  clearCover,
+  uploadAvatar,
+  updateName,
+  updateUrl,
+  updateDescription,
+  unfeatureProject,
+  removePin,
+  addPin,
+  addProject,
+  deleteProject,
+  leaveTeamProject,
+  removeProject,
+  joinTeamProject,
+  featureProject,
+}) {
+  const pinnedSet = new Set(team.teamPins.map(({ projectId }) => projectId));
+  // filter featuredProject out of both pinned & recent projects
+  const [pinnedProjects, recentProjects] = partition(team.projects.filter(({ id }) => id !== team.featuredProjectId), ({ id }) => pinnedSet.has(id));
+
+  const addProjectToCollection = (project, collection) => api.patch(`collections/${collection.id}/add/${project.id}`);
+  const featuredProject = team.projects.find(({ id }) => id === team.featuredProjectId);
+  const isTeamAdmin = currentUserIsTeamAdmin({ currentUser, team });
+  const isOnTeam = currentUserIsOnTeam({ currentUser, team });
+
+  const projectOptions = {
+    addProjectToCollection,
+    deleteProject,
+    leaveTeamProject,
+  };
+  if (currentUserIsOnTeam({ currentUser, team })) {
+    Object.assign(projectOptions, {
+      removeProjectFromTeam: removeProject,
+      joinTeamProject,
+      featureProject,
+    });
   }
 
-  async componentDidMount() {
-    const invitees = await this.getInvitees();
-    this.setState({ invitees });
-  }
+  return (
+    <main className={styles.container}>
+      <section>
+        <Beta />
+        <ProfileContainer
+          item={team}
+          type="team"
+          coverActions={{
+            'Upload Cover': isTeamAdmin ? uploadCover : null,
+            'Clear Cover': isTeamAdmin && team.hasCoverImage ? clearCover : null,
+          }}
+          avatarActions={{
+            'Upload Avatar': isTeamAdmin ? uploadAvatar : null,
+          }}
+        >
+          {isTeamAdmin ? (
+            <TeamNameUrlFields team={team} updateName={updateName} updateUrl={updateUrl} />
+          ) : (
+            <>
+              <Heading tagName="h1">
+                {team.name} {team.isVerified && <VerifiedBadge />}
+              </Heading>
+              <p className={styles.teamUrl}>@{team.url}</p>
+            </>
+          )}
+          <div className={styles.usersInformation}>
+            <TeamUsers />
+          </div>
+          <Thanks count={team.users.reduce((total, { thanksCount }) => total + thanksCount, 0)} />
+          <AuthDescription authorized={isTeamAdmin} description={team.description} update={updateDescription} placeholder="Tell us about your team" />
+        </ProfileContainer>
+      </section>
 
-  getProjectOptions() {
-    const { currentUser, team, deleteProject, leaveTeamProject, removeProject, joinTeamProject, featureProject } = this.props;
-    const projectOptions = {
-      addProjectToCollection: this.addProjectToCollection,
-      deleteProject,
-      leaveTeamProject,
-    };
-    if (currentUserIsOnTeam({ currentUser, team })) {
-      Object.assign(projectOptions, {
-        removeProjectFromTeam: removeProject,
-        joinTeamProject,
-        featureProject,
-      });
-    }
+      <ErrorBoundary>
+        <AddTeamProject teamProjects={team.projects} />
+      </ErrorBoundary>
 
-    return projectOptions;
-  }
+      {featuredProject && (
+        <FeaturedProject
+          featuredProject={featuredProject}
+          isAuthorized={isOnTeam}
+          unfeatureProject={unfeatureProject}
+          addProjectToCollection={addProjectToCollection}
+          currentUser={currentUser}
+        />
+      )}
 
-  async getInvitees() {
-    const { currentUser, team, api } = this.props;
-    if (currentUserIsOnTeam({ currentUser, team })) {
-      try {
-        const data = await Promise.all(team.tokens.map(({ userId }) => api.get(`users/${userId}`)));
-        const invitees = data.map((user) => user.data).filter((user) => !!user);
-        return invitees;
-      } catch (error) {
-        if (error && error.response && error.response.status === 404) {
-          return null;
-        }
-        captureException(error);
-      }
-    }
-    return [];
-  }
+      {/* Pinned Projects */}
+      {pinnedProjects.length > 0 && (
+        <ProjectsList
+          title={
+            <>
+              Pinned Projects <Emoji inTitle name="pushpin" />
+            </>
+          }
+          projects={pinnedProjects}
+          isAuthorized={isOnTeam}
+          removePin={removePin}
+          projectOptions={{
+            removePin: isOnTeam ? removePin : undefined,
+            ...projectOptions,
+          }}
+        />
+      )}
 
-  async addProjectToCollection(project, collection) {
-    await this.props.api.patch(`collections/${collection.id}/add/${project.id}`);
-  }
+      {/* Recent Projects */}
+      {recentProjects.length > 0 && (
+        <ProjectsList
+          title="Recent Projects"
+          projects={recentProjects}
+          isAuthorized={isOnTeam}
+          enablePagination
+          enableFiltering={recentProjects.length > 6}
+          projectOptions={{
+            addPin: isOnTeam ? addPin : undefined,
+            ...projectOptions,
+          }}
+        />
+      )}
 
-  render() {
-    const {
-      api,
-      currentUser,
-      team,
-      uploadCover,
-      clearCover,
-      uploadAvatar,
-      updateName,
-      updateUrl,
-      updateDescription,
-      unfeatureProject,
-      addProjectToCollection,
-      removePin,
-      addPin,
-      addProject
-    } = this.props;
-    const pinnedSet = new Set(team.teamPins.map(({ projectId }) => projectId));
-    // filter featuredProject out of both pinned & recent projects
-    const [pinnedProjects, recentProjects] = partition(team.projects.filter(({ id }) => id !== team.featuredProjectId), ({ id }) =>
-      pinnedSet.has(id),
-    );
-    const featuredProject = team.projects.find(({ id }) => id === team.featuredProjectId);
-    const isTeamAdmin = currentUserIsTeamAdmin({ currentUser, team })
-    const isOnTeam = currentUserIsOnTeam({ currentUser, team })
+      {team.projects.length === 0 && isOnTeam && <ProjectPals />}
 
-    return (
-      <main className={styles.container}>
-        <section>
-          <Beta />
-          <ProfileContainer
-            item={team}
-            type="team"
-            coverActions={{
-              'Upload Cover': isTeamAdmin ? uploadCover : null,
-              'Clear Cover': isTeamAdmin && team.hasCoverImage ? clearCover : null,
-            }}
-            avatarActions={{
-              'Upload Avatar': isTeamAdmin ? uploadAvatar : null,
-            }}
-          >
-            {isTeamAdmin ? (
-              <TeamNameUrlFields team={team} updateName={updateName} updateUrl={updateUrl} />
-            ) : (
-              <>
-                <Heading tagName="h1">
-                  {team.name} {team.isVerified && <VerifiedBadge />}
-                </Heading>
-                <p className={styles.teamUrl}>@{team.url}</p>
-              </>
-            )}
-            <div className={styles.usersInformation}>
-              <TeamUsers {...this.props} invitees={this.state.invitees} />
-            </div>
-            <Thanks count={team.users.reduce((total, { thanksCount }) => total + thanksCount, 0)} />
-            <AuthDescription
-              authorized={isTeamAdmin}
-              description={team.description}
-              update={updateDescription}
-              placeholder="Tell us about your team"
-            />
-          </ProfileContainer>
-        </section>
+      {/* TEAM COLLECTIONS */}
+      <ErrorBoundary>
+        <DataLoader get={() => api.get(`collections?teamId=${team.id}`)} renderLoader={() => <TeamPageCollections collections={team.collections} />}>
+          {({ data }) => <TeamPageCollections collections={data} />}
+        </DataLoader>
+      </ErrorBoundary>
 
+      {isOnTeam && (
         <ErrorBoundary>
-          <AddTeamProject {...this.props} teamProjects={team.projects} />
+          <TeamAnalytics
+            id={team.id}
+            currentUserIsOnTeam={isOnTeam}
+            projects={team.projects}
+            addProject={addProject}
+            myProjects={currentUser ? currentUser.projects : []}
+          />
         </ErrorBoundary>
+      )}
 
-        {featuredProject && (
-          <FeaturedProject
-            featuredProject={featuredProject}
-            isAuthorized={isOnTeam}
-            unfeatureProject={unfeatureProject}
-            addProjectToCollection={addProjectToCollection}
-            currentUser={currentUser}
-          />
-        )}
+      {isTeamAdmin && <DeleteTeam team={team} users={team.users} />}
 
-        {/* Pinned Projects */}
-        {pinnedProjects.length > 0 && (
-          <ProjectsList
-            title={
-              <>
-                Pinned Projects <Emoji inTitle name="pushpin" />
-              </>
-            }
-            projects={pinnedProjects}
-            isAuthorized={isOnTeam}
-            removePin={removePin}
-            projectOptions={{
-              removePin: isOnTeam ? removePin : undefined,
-              ...this.getProjectOptions(),
-            }}
-          />
-        )}
-
-        {/* Recent Projects */}
-        {recentProjects.length > 0 && (
-          <ProjectsList
-            title="Recent Projects"
-            projects={recentProjects}
-            isAuthorized={isOnTeam}
-            enablePagination
-            enableFiltering={recentProjects.length > 6}
-            projectOptions={{
-              addPin: isOnTeam ? addPin : undefined,
-              ...this.getProjectOptions(),
-            }}
-          />
-        )}
-
-        {team.projects.length === 0 && isOnTeam && <ProjectPals />}
-
-        {/* TEAM COLLECTIONS */}
-        <ErrorBoundary>
-          <DataLoader
-            get={() => api.get(`collections?teamId=${team.id}`)}
-            renderLoader={() => <TeamPageCollections {...this.props} collections={team.collections} />}
-          >
-            {({ data }) => <TeamPageCollections {...this.props} collections={data} />}
-          </DataLoader>
-        </ErrorBoundary>
-
-        {isOnTeam && (
-          <ErrorBoundary>
-            <TeamAnalytics
-              id={team.id}
-              currentUserIsOnTeam={isOnTeam}
-              projects={team.projects}
-              addProject={addProject}
-              myProjects={currentUser ? currentUser.projects : []}
-            />
-          </ErrorBoundary>
-        )}
-
-        {isTeamAdmin && <DeleteTeam team={team} users={team.users} />}
-
-        {!isOnTeam && (
-          <>
-            <ReportButton reportedType="team" reportedModel={team} />
-            <TeamMarketing />
-          </>
-        )}
-      </main>
-    );
-  }
+      {!isOnTeam && (
+        <>
+          <ReportButton reportedType="team" reportedModel={team} />
+          <TeamMarketing />
+        </>
+      )}
+    </main>
+  );
 }
 
 TeamPage.propTypes = {

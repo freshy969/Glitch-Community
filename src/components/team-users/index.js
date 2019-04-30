@@ -236,3 +236,20 @@ const TeamUsersContainer = ({
 );
 
 export default TeamUsersContainer;
+
+  async function getInvitees() {
+    const { currentUser, team, api } = this.props;
+    if (currentUserIsOnTeam({ currentUser, team })) {
+      try {
+        const data = await Promise.all(team.tokens.map(({ userId }) => api.get(`users/${userId}`)));
+        const invitees = data.map((user) => user.data).filter((user) => !!user);
+        return invitees;
+      } catch (error) {
+        if (error && error.response && error.response.status === 404) {
+          return null;
+        }
+        captureException(error);
+      }
+    }
+    return [];
+  }
