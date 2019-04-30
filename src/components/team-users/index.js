@@ -6,13 +6,14 @@ import TooltipContainer from 'Components/tooltips/tooltip-container';
 import { UserAvatar } from 'Components/images/avatar';
 import { UserLink } from 'Components/link';
 import { getDisplayName } from 'Models/user';
-import { currentUserIsOnTeam } from 'Models/team';
+import { currentUserIsOnTeam, currentUserIsTeamAdmin, currentUserCanJoinTeam } from 'Models/team';
 import { useTracker } from '../segment-analytics';
 import { WhitelistedDomainIcon } from './team-elements';
 import AddTeamUserPop from '../pop-overs/add-team-user-pop';
 import PopoverWithButton from '../pop-overs/popover-with-button';
 import PopoverContainer from '../pop-overs/popover-container';
 import TeamUserInfoPop from '../pop-overs/team-user-info-pop';
+import { useCurrentUser } from '../../state/current-user';
 import { createAPIHook } from '../../state/api';
 
 // Team Users list (in profile container)
@@ -119,11 +120,11 @@ WhitelistedDomain.defaultProps = {
 
 // Add Team User
 
-const AddTeamUser = ({ inviteEmail, inviteUser, setWhitelistedDomain, ...props }) => {
+const AddTeamUser = ({ inviteEmail, inviteUser, setWhitelistedDomain, members, invitedMembers, whitelistedDomain }) => {
   const [invitee, setInvitee] = React.useState('');
   const [newlyInvited, setNewlyInvited] = React.useState([]);
 
-  const alreadyInvitedAndNewInvited = uniqBy(props.invitedMembers.concat(newlyInvited), (user) => user.id);
+  const alreadyInvitedAndNewInvited = uniqBy(invitedMembers.concat(newlyInvited), (user) => user.id);
   const track = useTracker('Add to Team clicked');
 
   const onSetWhitelistedDomain = async (togglePopover, domain) => {
@@ -172,7 +173,8 @@ const AddTeamUser = ({ inviteEmail, inviteUser, setWhitelistedDomain, ...props }
         <PopoverWithButton buttonClass="button-small button-tertiary add-user" buttonText="Add" onOpen={track}>
           {({ togglePopover }) => (
             <AddTeamUserPop
-              {...props}
+              members={members}
+              whitelistedDomain={whitelistedDomain}
               setWhitelistedDomain={setWhitelistedDomain ? (domain) => onSetWhitelistedDomain(togglePopover, domain) : null}
               inviteUser={inviteUser ? (user) => onInviteUser(togglePopover, user) : null}
               inviteEmail={inviteEmail ? (email) => onInviteEmail(togglePopover, email) : null}
@@ -192,11 +194,15 @@ AddTeamUser.propTypes = {
   inviteEmail: PropTypes.func,
   inviteUser: PropTypes.func,
   setWhitelistedDomain: PropTypes.func,
+  invitedMembers: PropTypes.array.isRequired,
+  members: PropTypes.array.isRequired,
+  whitelistedDomain: PropTypes.string,
 };
 AddTeamUser.defaultProps = {
   setWhitelistedDomain: null,
   inviteUser: null,
   inviteEmail: null,
+  whitelistedDomain: null
 };
 
 // Join Team
@@ -208,43 +214,33 @@ export const JoinTeam = ({ onClick }) => (
 );
 
 const useInvitees = createAPIHook(async (api, team, currentUser) => {
-  if (!currentUserIsOnTeam({ currentUser, team })) return []
+  if (!currentUserIsOnTeam({ currentUser, team })) return [];
   const data = await Promise.all(team.tokens.map(({ userId }) => api.get(`users/${userId}`)));
   return data.map((user) => user.data).filter((user) => !!user);
 });
 
-const TeamUsersContainer = ({
-  team,
-  currentUserIsTeamAdmin,
-  updateWhitelistedDomain,
-  currentUserIsOnTeam,
-  inviteEmail,
-  inviteUser,
-  invitees,
-  userCanJoinTeam,
-  joinTeam,
-}) => (
-  <>
-    <TeamUsers users={team.users} teamId={team.id} adminIds={team.adminIds} />
-    {!!team.whitelistedDomain && (
-      <WhitelistedDomain domain={team.whitelistedDomain} setDomain={currentUserIsTeamAdmin ? updateWhitelistedDomain : null} />
-    )}
-    {currentUserIsOnTeam && (
-      <AddTeamUser
-        inviteEmail={inviteEmail}
-        inviteUser={inviteUser}
-        setWhitelistedDomain={currentUserIsTeamAdmin ? updateWhitelistedDomain : null}
-        members={team.users.map(({ id }) => id)}
-        invitedMembers={invitees}
-        whitelistedDomain={team.whitelistedDomain}
-      />
-    )}
-    {userCanJoinTeam && <JoinTeam onClick={joinTeam} />}
-  </>
-);
-
+const TeamUsersContainer = ({ team, updateWhitelistedDomain, inviteEmail, inviteUser, joinTeam }) => {
+  const { currentUser } = useCurrentUser();
+  const { value: invitees } = useInvitees(team, currentUser);
+  const isAdmin = currentUserIsTeamAdmin({ currentUser, team });
+  return (
+    <>
+      <TeamUsers users={team.users} teamId={team.id} adminIds={team.adminIds} />
+      {!!team.whitelistedDomain && (
+        <WhitelistedDomain domain={team.whitelistedDomain} setDomain={isAdmin ? updateWhitelistedDomain : null} />
+      )}
+      {currentUserIsOnTeam({ currentUser, team }) && (
+        <AddTeamUser
+          inviteEmail={inviteEmail}
+          inviteUser={inviteUser}
+          setWhitelistedDomain={isAdmin ? updateWhitelistedDomain : null}
+          members={team.users.map(({ id }) => id)}
+          invitedMembers={invitees || []}
+          whitelistedDomain={team.whitelistedDomain}
+        />
+      )}
+      {currentUserCanJoinTeam({ currentUser, team }) && <JoinTeam onClick={joinTeam} />}
+    </>
+  );
+};
 export default TeamUsersContainer;
-
-async function getInvitees() {
-  const { currentUser, team, api } = this.props;
-}
