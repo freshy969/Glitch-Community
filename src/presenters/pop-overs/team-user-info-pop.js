@@ -17,11 +17,11 @@ const ADMIN_ACCESS_LEVEL = 30;
 
 // Remove from Team 👋
 
-const RemoveFromTeam = ({ onClick, ...props }) => {
+const RemoveFromTeam = ({ onClick }) => {
   const onClickTracked = useTrackedFunc(onClick, 'Remove from Team clicked');
   return (
     <section className="pop-over-actions danger-zone">
-      <button className="button-small has-emoji button-tertiary button-on-secondary-background" onClick={onClickTracked} {...props}>
+      <button className="button-small has-emoji button-tertiary button-on-secondary-background" onClick={onClickTracked}>
         Remove from Team <span className="emoji wave" role="img" aria-label="" />
       </button>
     </section>
@@ -30,10 +30,9 @@ const RemoveFromTeam = ({ onClick, ...props }) => {
 
 // Admin Actions Section ⏫⏬
 
-const AdminActions = ({ user, userIsTeamAdmin, updateUserPermissions, canChangeUserAdminStatus }) => {
+const AdminActions = ({ user, userIsTeamAdmin, updateUserPermissions }) => {
   const onClickRemoveAdmin = useTrackedFunc(() => updateUserPermissions(user.id, MEMBER_ACCESS_LEVEL), 'Remove Admin Status clicked');
   const onClickMakeAdmin = useTrackedFunc(() => updateUserPermissions(user.id, ADMIN_ACCESS_LEVEL), 'Make an Admin clicked');
-  if (!canChangeUserAdminStatus) return null;
   return (
     <section className="pop-over-actions admin-actions">
       <p className="action-description">Admins can update team info, billing, and remove users</p>
@@ -56,7 +55,6 @@ AdminActions.propTypes = {
   }).isRequired,
   userIsTeamAdmin: PropTypes.bool.isRequired,
   updateUserPermissions: PropTypes.func.isRequired,
-  canChangeUserAdminStatus: PropTypes.bool.isRequired,
 };
 
 // Thanks 💖
@@ -69,11 +67,22 @@ const ThanksCount = ({ count }) => (
 
 // Team User Info 😍
 
-const TeamUserInfo = ({ currentUser, currentUserIsTeamAdmin, showRemove, userTeamProjects, removeUser, ...props }) => {
-  const userAvatarStyle = { backgroundColor: props.user.color };
+const TeamUserInfo = ({
+  currentUser,
+  currentUserIsTeamAdmin,
+  showRemove,
+  userTeamProjects,
+  removeUser,
+  user,
+  userIsTheOnlyMember,
+  userIsTheOnlyAdmin,
+  userIsTeamAdmin,
+  updateUserPermissions,
+}) => {
+  const userAvatarStyle = { backgroundColor: user.color };
 
-  const currentUserHasRemovePriveleges = currentUserIsTeamAdmin || (currentUser && currentUser.id === props.user.id);
-  const canRemoveUser = !(props.userIsTheOnlyMember || props.userIsTheOnlyAdmin);
+  const currentUserHasRemovePriveleges = currentUserIsTeamAdmin || (currentUser && currentUser.id === user.id);
+  const canRemoveUser = !(userIsTheOnlyMember || userIsTheOnlyAdmin);
   const canCurrentUserRemoveUser = canRemoveUser && currentUserHasRemovePriveleges;
 
   // if user is a member of no projects, skip the confirm step
@@ -88,22 +97,22 @@ const TeamUserInfo = ({ currentUser, currentUserIsTeamAdmin, showRemove, userTea
   return (
     <dialog className="pop-over team-user-info-pop">
       <section className="pop-over-info user-info">
-        <UserLink user={props.user}>
-          <img className="avatar" src={getAvatarThumbnailUrl(props.user)} alt={props.user.login} style={userAvatarStyle} />
+        <UserLink user={user}>
+          <img className="avatar" src={getAvatarThumbnailUrl(user)} alt={user.login} style={userAvatarStyle} />
         </UserLink>
         <div className="info-container">
-          <p className="name" title={props.user.name}>
-            {props.user.name || 'Anonymous'}
+          <p className="name" title={user.name}>
+            {user.name || 'Anonymous'}
           </p>
-          {props.user.login && (
-            <p className="user-login" title={props.user.login}>
-              @{props.user.login}
+          {user.login && (
+            <p className="user-login" title={user.login}>
+              @{user.login}
             </p>
           )}
-          {props.userIsTeamAdmin && (
+          {userIsTeamAdmin && (
             <div className="status-badge">
               <TooltipContainer
-                id={`admin-badge-tooltip-${props.user.login}`}
+                id={`admin-badge-tooltip-${user.login}`}
                 type="info"
                 target={<span className="status admin">Team Admin</span>}
                 tooltip="Can edit team info and billing"
@@ -112,13 +121,12 @@ const TeamUserInfo = ({ currentUser, currentUserIsTeamAdmin, showRemove, userTea
           )}
         </div>
       </section>
-      {props.user.thanksCount > 0 && <ThanksCount count={props.user.thanksCount} />}
-      {currentUserIsTeamAdmin && (
+      {user.thanksCount > 0 && <ThanksCount count={user.thanksCount} />}
+      {currentUserIsTeamAdmin && !userIsTheOnlyAdmin && (
         <AdminActions
-          user={props.user}
-          userIsTeamAdmin={props.userIsTeamAdmin}
-          updateUserPermissions={props.updateUserPermissions}
-          canChangeUserAdminStatus={!props.userIsTheOnlyAdmin}
+          user={user}
+          userIsTeamAdmin={userIsTeamAdmin}
+          updateUserPermissions={updateUserPermissions}
         />
       )}
       {canCurrentUserRemoveUser && <RemoveFromTeam onClick={onRemove} />}

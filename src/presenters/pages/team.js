@@ -15,7 +15,6 @@ import ProfileContainer from 'Components/profile-container';
 import Emoji from 'Components/images/emoji';
 import TeamUsers from 'Components/team-users';
 
-
 import { AnalyticsContext } from '../segment-analytics';
 import { useAPI } from '../../state/api';
 import { useCurrentUser } from '../../state/current-user';
@@ -181,17 +180,11 @@ class TeamPage extends React.Component {
               </>
             )}
             <div className={styles.usersInformation}>
-              <TeamUsers 
-                team={team}
-  currentUserIsTeamAdmin={currentUserIsTeamAdmin}
-  updateWhitelistedDomain={updateWhitelistedDomain}
-  currentUserIsOnTeam={currentUserIsOnTeam}
-  inviteEmail={inviteEmail}
-  inviteUser={inviteUser}
-  invitees={invitees}
-  userCanJoinTeam={userCanJoinTeam}
-  joinTeam={joinTeam}
-                />
+              <TeamUsers
+                {...this.props}
+                invitees={this.state.invitees}
+                userCanJoinTeam={this.userCanJoinTeam()}
+              />
             </div>
             <Thanks count={team.users.reduce((total, { thanksCount }) => total + thanksCount, 0)} />
             <AuthDescription
