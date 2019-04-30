@@ -107,6 +107,7 @@ function TeamPage({
   inviteUser,
   joinTeam,
   removeUserFromTeam,
+  updateUserPermissions,
 }) {
   const pinnedSet = new Set(team.teamPins.map(({ projectId }) => projectId));
   // filter featuredProject out of both pinned & recent projects
@@ -163,6 +164,7 @@ function TeamPage({
               inviteUser={inviteUser}
               joinTeam={joinTeam}
               removeUserFromTeam={removeUserFromTeam}
+              updateUserPermissions={updateUserPermissions}
             />
           </div>
           <Thanks count={team.users.reduce((total, { thanksCount }) => total + thanksCount, 0)} />
@@ -171,7 +173,7 @@ function TeamPage({
       </section>
 
       <ErrorBoundary>
-        <AddTeamProject addProject={addProject} teamProjects={team.projects} />
+        {isOnTeam && <AddTeamProject addProject={addProject} teamProjects={team.projects} />}
       </ErrorBoundary>
 
       {featuredProject && (

@@ -173,12 +173,7 @@ TeamUserInfoAndRemovePop.propTypes = {
     thanksCount: PropTypes.number.isRequired,
     color: PropTypes.string,
   }).isRequired,
-  currentUserIsOnTeam: PropTypes.bool.isRequired,
-  currentUserIsTeamAdmin: PropTypes.bool.isRequired,
   removeUserFromTeam: PropTypes.func.isRequired,
-  userIsTeamAdmin: PropTypes.bool.isRequired,
-  userIsTheOnlyMember: PropTypes.bool.isRequired,
-  teamId: PropTypes.number.isRequired,
   updateUserPermissions: PropTypes.func.isRequired,
   team: PropTypes.shape({
     projects: PropTypes.array.isRequired,

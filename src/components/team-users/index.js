@@ -26,15 +26,23 @@ const adminStatusDisplay = (adminIds, user) => {
   return '';
 };
 
-const TeamUsers = ({ users, adminIds, removeUserFromTeam }) => (
+const TeamUsers = ({ users, team, removeUserFromTeam, updateUserPermissions }) => (
   <ul className="users">
     {users.map((user) => (
       <li key={user.id}>
         <PopoverWithButton
           buttonClass="user button-unstyled tooltip-container-button"
-          buttonText={<UserAvatar user={user} suffix={adminStatusDisplay(adminIds, user)} withinButton />}
+          buttonText={<UserAvatar user={user} suffix={adminStatusDisplay(team.adminIds, user)} withinButton />}
         >
-          {({ togglePopover }) => <TeamUserInfoPop removeUserFromTeam={removeUserFromTeam} user={user} togglePopover={togglePopover} />}
+          {({ togglePopover }) => (
+            <TeamUserInfoPop
+              team={team}
+              removeUserFromTeam={removeUserFromTeam}
+              user={user}
+              updateUserPermissions={updateUserPermissions}
+              togglePopover={togglePopover}
+            />
+          )}
         </PopoverWithButton>
       </li>
     ))}
@@ -47,16 +55,9 @@ TeamUsers.propTypes = {
       id: PropTypes.number.isRequired,
     }),
   ).isRequired,
-  // these are all used by a spread. why doesn't eslint understand?
-  /* eslint-disable react/no-unused-prop-types */
-  currentUserIsOnTeam: PropTypes.bool.isRequired,
   removeUserFromTeam: PropTypes.func.isRequired,
   updateUserPermissions: PropTypes.func.isRequired,
-  teamId: PropTypes.number.isRequired,
-  currentUserIsTeamAdmin: PropTypes.bool.isRequired,
-  adminIds: PropTypes.array.isRequired,
   team: PropTypes.object.isRequired,
-  /* eslint-enable */
 };
 
 // Whitelisted domain icon
@@ -208,13 +209,13 @@ const useInvitees = createAPIHook(async (api, team, currentUser) => {
   return data.map((user) => user.data).filter((user) => !!user);
 });
 
-const TeamUsersContainer = ({ team, updateWhitelistedDomain, inviteEmail, inviteUser, joinTeam, removeUserFromTeam }) => {
+const TeamUsersContainer = ({ team, updateWhitelistedDomain, inviteEmail, inviteUser, joinTeam, removeUserFromTeam, updateUserPermissions }) => {
   const { currentUser } = useCurrentUser();
   const { value: invitees } = useInvitees(team, currentUser);
   const isAdmin = currentUserIsTeamAdmin({ currentUser, team });
   return (
     <>
-      <TeamUsers users={team.users} teamId={team.id} adminIds={team.adminIds} removeUserFromTeam={removeUserFromTeam} />
+      <TeamUsers team={team} users={team.users} removeUserFromTeam={removeUserFromTeam} updateUserPermissions={updateUserPermissions} />
       {!!team.whitelistedDomain && <WhitelistedDomain domain={team.whitelistedDomain} setDomain={isAdmin ? updateWhitelistedDomain : null} />}
       {currentUserIsOnTeam({ currentUser, team }) && (
         <AddTeamUser
