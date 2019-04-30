@@ -13,6 +13,8 @@ import Thanks from 'Components/thanks';
 import DataLoader from 'Components/data-loader';
 import ProfileContainer from 'Components/profile-container';
 import Emoji from 'Components/images/emoji';
+import TeamUsers from 'Components/team-users';
+
 
 import { AnalyticsContext } from '../segment-analytics';
 import { useAPI } from '../../state/api';
@@ -28,7 +30,6 @@ import CollectionsList from '../collections-list';
 import NameConflictWarning from '../includes/name-conflict';
 import AddTeamProject from '../includes/add-team-project';
 import DeleteTeam from '../includes/delete-team';
-import { AddTeamUser, TeamUsers, WhitelistedDomain, JoinTeam } from '../includes/team-users';
 
 import ProjectsLoader from '../projects-loader';
 import TeamAnalytics from '../includes/team-analytics';
@@ -180,24 +181,17 @@ class TeamPage extends React.Component {
               </>
             )}
             <div className={styles.usersInformation}>
-              <TeamUsers {...this.props} users={team.users} teamId={team.id} adminIds={team.adminIds} />
-              {!!team.whitelistedDomain && (
-                <WhitelistedDomain
-                  domain={team.whitelistedDomain}
-                  setDomain={this.props.currentUserIsTeamAdmin ? this.props.updateWhitelistedDomain : null}
+              <TeamUsers 
+                team={team}
+  currentUserIsTeamAdmin={currentUserIsTeamAdmin}
+  updateWhitelistedDomain={updateWhitelistedDomain}
+  currentUserIsOnTeam={currentUserIsOnTeam}
+  inviteEmail={inviteEmail}
+  inviteUser={inviteUser}
+  invitees={invitees}
+  userCanJoinTeam={userCanJoinTeam}
+  joinTeam={joinTeam}
                 />
-              )}
-              {this.props.currentUserIsOnTeam && (
-                <AddTeamUser
-                  inviteEmail={this.props.inviteEmail}
-                  inviteUser={this.props.inviteUser}
-                  setWhitelistedDomain={this.props.currentUserIsTeamAdmin ? this.props.updateWhitelistedDomain : null}
-                  members={team.users.map(({ id }) => id)}
-                  invitedMembers={this.state.invitees}
-                  whitelistedDomain={team.whitelistedDomain}
-                />
-              )}
-              {this.userCanJoinTeam() && <JoinTeam onClick={this.props.joinTeam} />}
             </div>
             <Thanks count={team.users.reduce((total, { thanksCount }) => total + thanksCount, 0)} />
             <AuthDescription

@@ -22,7 +22,7 @@ const adminStatusDisplay = (adminIds, user) => {
   return '';
 };
 
-export const TeamUsers = (props) => (
+const TeamUsers = (props) => (
   <ul className="users">
     {props.users.map((user) => {
       const userIsTeamAdmin = props.adminIds.includes(user.id);
@@ -70,7 +70,7 @@ TeamUsers.propTypes = {
 
 // Whitelisted domain icon
 
-export const WhitelistedDomain = ({ domain, setDomain }) => {
+const WhitelistedDomain = ({ domain, setDomain }) => {
   const tooltip = `Anyone with an @${domain} email can join`;
   return (
     <PopoverContainer>
@@ -117,7 +117,7 @@ WhitelistedDomain.defaultProps = {
 
 // Add Team User
 
-export const AddTeamUser = ({ inviteEmail, inviteUser, setWhitelistedDomain, ...props }) => {
+const AddTeamUser = ({ inviteEmail, inviteUser, setWhitelistedDomain, ...props }) => {
   const [invitee, setInvitee] = React.useState('');
   const [newlyInvited, setNewlyInvited] = React.useState([]);
 
@@ -204,3 +204,35 @@ export const JoinTeam = ({ onClick }) => (
     Join Team
   </button>
 );
+
+const TeamUsersContainer = ({
+  team,
+  currentUserIsTeamAdmin,
+  updateWhitelistedDomain,
+  currentUserIsOnTeam,
+  inviteEmail,
+  inviteUser,
+  invitees,
+  userCanJoinTeam,
+  joinTeam,
+}) => (
+  <>
+    <TeamUsers users={team.users} teamId={team.id} adminIds={team.adminIds} />
+    {!!team.whitelistedDomain && (
+      <WhitelistedDomain domain={team.whitelistedDomain} setDomain={currentUserIsTeamAdmin ? updateWhitelistedDomain : null} />
+    )}
+    {currentUserIsOnTeam && (
+      <AddTeamUser
+        inviteEmail={inviteEmail}
+        inviteUser={inviteUser}
+        setWhitelistedDomain={currentUserIsTeamAdmin ? updateWhitelistedDomain : null}
+        members={team.users.map(({ id }) => id)}
+        invitedMembers={invitees}
+        whitelistedDomain={team.whitelistedDomain}
+      />
+    )}
+    {userCanJoinTeam && <JoinTeam onClick={joinTeam} />}
+  </>
+);
+
+export default TeamUsersContainer;
