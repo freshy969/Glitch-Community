@@ -267,7 +267,7 @@ class TeamPage extends React.Component {
           </ErrorBoundary>
         )}
 
-        {this.props.currentUserIsTeamAdmin && <DeleteTeam teamId={team.id} teamName={team.name} teamAdmins={this.teamAdmins()} users={team.users} />}
+        {this.props.currentUserIsTeamAdmin && <DeleteTeam team={team} users={team.users} />}
 
         {!this.props.currentUserIsOnTeam && (
           <>
