@@ -22,7 +22,6 @@ import { useCurrentUser } from '../../state/current-user';
 import TeamEditor from '../team-editor';
 import AuthDescription from '../includes/auth-description';
 import ErrorBoundary from '../includes/error-boundary';
-import { captureException } from '../../utils/sentry';
 
 // import SampleTeamCollections from '../../curated/sample-team-collections';
 import CollectionsList from '../collections-list';
@@ -103,6 +102,11 @@ function TeamPage({
   removeProject,
   joinTeamProject,
   featureProject,
+  updateWhitelistedDomain,
+  inviteEmail,
+  inviteUser,
+  joinTeam,
+  removeUserFromTeam,
 }) {
   const pinnedSet = new Set(team.teamPins.map(({ projectId }) => projectId));
   // filter featuredProject out of both pinned & recent projects
@@ -152,7 +156,14 @@ function TeamPage({
             </>
           )}
           <div className={styles.usersInformation}>
-            <TeamUsers />
+            <TeamUsers
+              team={team}
+              updateWhitelistedDomain={updateWhitelistedDomain}
+              inviteEmail={inviteEmail}
+              inviteUser={inviteUser}
+              joinTeam={joinTeam}
+              removeUserFromTeam={removeUserFromTeam}
+            />
           </div>
           <Thanks count={team.users.reduce((total, { thanksCount }) => total + thanksCount, 0)} />
           <AuthDescription authorized={isTeamAdmin} description={team.description} update={updateDescription} placeholder="Tell us about your team" />
@@ -270,8 +281,6 @@ TeamPage.propTypes = {
   api: PropTypes.func.isRequired,
   clearCover: PropTypes.func.isRequired,
   currentUser: PropTypes.object.isRequired,
-  currentUserIsOnTeam: PropTypes.bool.isRequired,
-  currentUserIsTeamAdmin: PropTypes.bool.isRequired,
   removeUserFromTeam: PropTypes.func.isRequired,
   removePin: PropTypes.func.isRequired,
   removeProject: PropTypes.func.isRequired,
@@ -282,7 +291,6 @@ TeamPage.propTypes = {
   uploadCover: PropTypes.func.isRequired,
   featureProject: PropTypes.func.isRequired,
   unfeatureProject: PropTypes.func.isRequired,
-  addProjectToCollection: PropTypes.func.isRequired,
 };
 
 const teamConflictsWithUser = (team, currentUser) => {

@@ -7,14 +7,15 @@ import { UserAvatar } from 'Components/images/avatar';
 import { UserLink } from 'Components/link';
 import { getDisplayName } from 'Models/user';
 import { currentUserIsOnTeam, currentUserIsTeamAdmin, currentUserCanJoinTeam } from 'Models/team';
-import { useTracker } from '../segment-analytics';
-import { WhitelistedDomainIcon } from './team-elements';
-import AddTeamUserPop from '../pop-overs/add-team-user-pop';
-import PopoverWithButton from '../pop-overs/popover-with-button';
-import PopoverContainer from '../pop-overs/popover-container';
-import TeamUserInfoPop from '../pop-overs/team-user-info-pop';
+import { useTracker } from '../../presenters/segment-analytics';
+import { WhitelistedDomainIcon } from '../../presenters/includes/team-elements';
+import AddTeamUserPop from '../../presenters/pop-overs/add-team-user-pop';
+import PopoverWithButton from '../../presenters/pop-overs/popover-with-button';
+import PopoverContainer from '../../presenters/pop-overs/popover-container';
+import TeamUserInfoPop from '../../presenters/pop-overs/team-user-info-pop';
 import { useCurrentUser } from '../../state/current-user';
 import { createAPIHook } from '../../state/api';
+// import { captureException } from '../../utils/sentry';
 
 // Team Users list (in profile container)
 
@@ -25,31 +26,18 @@ const adminStatusDisplay = (adminIds, user) => {
   return '';
 };
 
-const TeamUsers = (props) => (
+const TeamUsers = ({ users, adminIds, removeUserFromTeam }) => (
   <ul className="users">
-    {props.users.map((user) => {
-      const userIsTeamAdmin = props.adminIds.includes(user.id);
-
-      return (
-        <li key={user.id}>
-          <PopoverWithButton
-            buttonClass="user button-unstyled tooltip-container-button"
-            buttonText={<UserAvatar user={user} suffix={adminStatusDisplay(props.adminIds, user)} withinButton />}
-          >
-            {({ togglePopover }) => (
-              <TeamUserInfoPop
-                userIsTeamAdmin={userIsTeamAdmin}
-                userIsTheOnlyAdmin={userIsTeamAdmin && props.adminIds.length === 1}
-                userIsTheOnlyMember={props.users.length === 1}
-                user={user}
-                togglePopover={togglePopover}
-                {...props}
-              />
-            )}
-          </PopoverWithButton>
-        </li>
-      );
-    })}
+    {users.map((user) => (
+      <li key={user.id}>
+        <PopoverWithButton
+          buttonClass="user button-unstyled tooltip-container-button"
+          buttonText={<UserAvatar user={user} suffix={adminStatusDisplay(adminIds, user)} withinButton />}
+        >
+          {({ togglePopover }) => <TeamUserInfoPop removeUserFromTeam={removeUserFromTeam} user={user} togglePopover={togglePopover} />}
+        </PopoverWithButton>
+      </li>
+    ))}
   </ul>
 );
 
@@ -202,7 +190,7 @@ AddTeamUser.defaultProps = {
   setWhitelistedDomain: null,
   inviteUser: null,
   inviteEmail: null,
-  whitelistedDomain: null
+  whitelistedDomain: null,
 };
 
 // Join Team
@@ -213,22 +201,21 @@ export const JoinTeam = ({ onClick }) => (
   </button>
 );
 
+// TODO: captureException
 const useInvitees = createAPIHook(async (api, team, currentUser) => {
   if (!currentUserIsOnTeam({ currentUser, team })) return [];
   const data = await Promise.all(team.tokens.map(({ userId }) => api.get(`users/${userId}`)));
   return data.map((user) => user.data).filter((user) => !!user);
 });
 
-const TeamUsersContainer = ({ team, updateWhitelistedDomain, inviteEmail, inviteUser, joinTeam }) => {
+const TeamUsersContainer = ({ team, updateWhitelistedDomain, inviteEmail, inviteUser, joinTeam, removeUserFromTeam }) => {
   const { currentUser } = useCurrentUser();
   const { value: invitees } = useInvitees(team, currentUser);
   const isAdmin = currentUserIsTeamAdmin({ currentUser, team });
   return (
     <>
-      <TeamUsers users={team.users} teamId={team.id} adminIds={team.adminIds} />
-      {!!team.whitelistedDomain && (
-        <WhitelistedDomain domain={team.whitelistedDomain} setDomain={isAdmin ? updateWhitelistedDomain : null} />
-      )}
+      <TeamUsers users={team.users} teamId={team.id} adminIds={team.adminIds} removeUserFromTeam={removeUserFromTeam} />
+      {!!team.whitelistedDomain && <WhitelistedDomain domain={team.whitelistedDomain} setDomain={isAdmin ? updateWhitelistedDomain : null} />}
       {currentUserIsOnTeam({ currentUser, team }) && (
         <AddTeamUser
           inviteEmail={inviteEmail}
