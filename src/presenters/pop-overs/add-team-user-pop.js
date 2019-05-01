@@ -19,7 +19,6 @@ const WhitelistEmailDomain = ({ domain, onClick }) => (
       <div className="add-team-user-pop__whitelist-email-image">
         <WhitelistedDomainIcon domain={domain} />
       </div>
-
       <div>Allow anyone with an @{domain} email to join</div>
     </div>
   </button>
