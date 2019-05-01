@@ -12,8 +12,8 @@ import Thanks from 'Components/thanks';
 import DataLoader from 'Components/data-loader';
 import ProfileContainer from 'Components/profile-container';
 import Emoji from 'Components/images/emoji';
+import Button from 'Components/buttons/button';
 import TeamUsers from 'Components/team-users';
-import Link from 'Components/link';
 import VerifiedBadge from 'Components/verified-badge';
 import { getLink, currentUserIsOnTeam, currentUserIsTeamAdmin } from 'Models/team';
 
@@ -47,9 +47,9 @@ const TeamMarketing = () => (
       <img className="for-platforms-icon" src={forPlatformsIcon} alt="fishing emoji" />
       Want your own team page, complete with detailed app analytics?
     </Text>
-    <Link to="/teams" className="button button-link has-emoji">
-      About Teams <span className="emoji fishing_pole" role="img" aria-label="emoji" />
-    </Link>
+    <Button href="/teams">
+      About Teams <Emoji name="fishingPole" />
+    </Button>
   </section>
 );
 
