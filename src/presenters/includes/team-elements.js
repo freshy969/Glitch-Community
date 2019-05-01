@@ -13,16 +13,6 @@ export const VerifiedBadge = () => {
   return <TooltipContainer id="verified-team-tooltip" type="info" tooltip={tooltip} target={<img className="verified" src={image} alt="✓" />} />;
 };
 
-const WhitelistedDomainIcon = ({ domain }) => {
-  const [src, setSrc] = useState(null)
-  useEffect(() => {
-    setSrc(`https://favicon-fetcher.glitch.me/img/${domain}`)
-  }, [domain])
-  if (src) {
-    return <Image className="whitelisted-domain" alt={domain} src={this.state.src} onError={() => this.setState({ src: null })} />;
-  }
-}
-
 
 export class WhitelistedDomainIcon extends React.Component {
   constructor(props) {

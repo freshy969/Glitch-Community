@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { uniqBy } from 'lodash';
 import classnames from 'classnames';
@@ -7,10 +7,10 @@ import TooltipContainer from 'Components/tooltips/tooltip-container';
 import { UserAvatar } from 'Components/images/avatar';
 import { UserLink } from 'Components/link';
 import Button from 'Components/buttons/button';
+import Emoji from 'Components/images/emoji';
 import { getDisplayName } from 'Models/user';
 import { currentUserIsOnTeam, currentUserIsTeamAdmin, currentUserCanJoinTeam } from 'Models/team';
 import { useTracker } from '../../presenters/segment-analytics';
-import { WhitelistedDomainIcon } from '../../presenters/includes/team-elements';
 import AddTeamUserPop from '../../presenters/pop-overs/add-team-user-pop';
 import PopoverWithButton from '../../presenters/pop-overs/popover-with-button';
 import PopoverContainer from '../../presenters/pop-overs/popover-container';
@@ -63,6 +63,23 @@ const UserToAdd = ({ user }) => (
 
 // Whitelisted domain icon
 
+import Image from 'Components/images/image';
+
+const WhitelistedDomainIcon = ({ domain }) => {
+  const [src, setSrc] = useState(null);
+  useEffect(() => {
+    setSrc(`https://favicon-fetcher.glitch.me/img/${domain}`);
+  }, [domain]);
+  if (src) {
+    return <Image className={styles.whitelistedDomainIcon} alt={domain} src={src} onError={() => setSrc(null)} />;
+  }
+  return (
+    <div className={styles.whitelistedDomainLabel} aria-label={domain}>
+      {domain[0].toUpperCase()}
+    </div>
+  );
+};
+
 const WhitelistedDomain = ({ domain, setDomain }) => {
   const tooltip = `Anyone with an @${domain} email can join`;
   return (
@@ -91,9 +108,9 @@ const WhitelistedDomain = ({ domain, setDomain }) => {
             </section>
             {!!setDomain && (
               <section className="pop-over-actions danger-zone">
-                <button className="button button-small button-tertiary button-on-secondary-background has-emoji" onClick={() => setDomain(null)}>
-                  Remove {domain} <span className="emoji bomb" />
-                </button>
+                <Button type="dangerZone" onClick={() => setDomain(null)}>
+                  Remove {domain} <Emoji name="bomb" />
+                </Button>
               </section>
             )}
           </dialog>
