@@ -11,6 +11,7 @@ import { NestedPopover } from './popover-nested';
 import { useNotifications } from '../notifications';
 import TeamUserRemovePop from './team-user-remove-pop';
 import { useAPI } from '../../state/api';
+import { useCurrentUser } from '../../state/current-user';
 
 const MEMBER_ACCESS_LEVEL = 20;
 const ADMIN_ACCESS_LEVEL = 30;
@@ -67,19 +68,14 @@ const ThanksCount = ({ count }) => (
 
 // Team User Info 😍
 
-const TeamUserInfo = ({
-  currentUser,
-  currentUserIsTeamAdmin,
-  showRemove,
-  userTeamProjects,
-  removeUser,
-  user,
-  userIsTheOnlyMember,
-  userIsTheOnlyAdmin,
-  userIsTeamAdmin,
-  updateUserPermissions,
-}) => {
+const TeamUserInfo = ({ showRemove, user, team, updateUserPermissions, removeUser, userTeamProjects }) => {
+  const { currentUser } = useCurrentUser();
   const userAvatarStyle = { backgroundColor: user.color };
+
+  const currentUserIsTeamAdmin = team.adminIds.includes(currentUser.id);
+  const isTeamAdmin = team.adminIds.includes(user.id);
+  const userIsTheOnlyAdmin = isTeamAdmin && team.adminIds.length === 1;
+  const userIsTheOnlyMember = team.users.length === 1;
 
   const currentUserHasRemovePriveleges = currentUserIsTeamAdmin || (currentUser && currentUser.id === user.id);
   const canRemoveUser = !(userIsTheOnlyMember || userIsTheOnlyAdmin);
@@ -109,7 +105,7 @@ const TeamUserInfo = ({
               @{user.login}
             </p>
           )}
-          {userIsTeamAdmin && (
+          {isTeamAdmin && (
             <div className="status-badge">
               <TooltipContainer
                 id={`admin-badge-tooltip-${user.login}`}
@@ -123,11 +119,7 @@ const TeamUserInfo = ({
       </section>
       {user.thanksCount > 0 && <ThanksCount count={user.thanksCount} />}
       {currentUserIsTeamAdmin && !userIsTheOnlyAdmin && (
-        <AdminActions
-          user={user}
-          userIsTeamAdmin={userIsTeamAdmin}
-          updateUserPermissions={updateUserPermissions}
-        />
+        <AdminActions user={user} userIsTeamAdmin={isTeamAdmin} updateUserPermissions={updateUserPermissions} />
       )}
       {canCurrentUserRemoveUser && <RemoveFromTeam onClick={onRemove} />}
     </dialog>
@@ -139,25 +131,25 @@ const TeamUserInfo = ({
 // Team User Info or Remove
 // uses removeTeamUserVisible state to toggle between showing user info and remove views
 
-const TeamUserInfoAndRemovePop = (props) => {
+const TeamUserInfoAndRemovePop = ({ user, team, removeUserFromTeam, updateUserPermissions }) => {
   const api = useAPI();
   const { createNotification } = useNotifications();
   const [userTeamProjects, setUserTeamProjects] = useState({ status: 'loading', data: null });
   useEffect(() => {
-    api.get(`users/${props.user.id}`).then(({ data }) => {
+    api.get(`users/${user.id}`).then(({ data }) => {
       setUserTeamProjects({
         status: 'ready',
-        data: data.projects.filter((userProj) => props.team.projects.some((teamProj) => teamProj.id === userProj.id)),
+        data: data.projects.filter((userProj) => team.projects.some((teamProj) => teamProj.id === userProj.id)),
       });
     });
-  }, [props.user.id]);
+  }, [user.id]);
 
   function removeUser(selectedProjects = []) {
-    createNotification(`${getDisplayName(props.user)} removed from Team`);
-    props.removeUserFromTeam(props.user.id, Array.from(selectedProjects));
+    createNotification(`${getDisplayName(user)} removed from Team`);
+    removeUserFromTeam(user.id, Array.from(selectedProjects));
   }
 
-  const propsWithUserRemoval = { ...props, removeUser, userTeamProjects };
+  const propsWithUserRemoval = { user, team, updateUserPermissions, removeUser, userTeamProjects };
 
   return (
     <NestedPopover alternateContent={() => <TeamUserRemovePop {...propsWithUserRemoval} />}>

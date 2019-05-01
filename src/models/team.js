@@ -51,9 +51,8 @@ export function teamAdmins({ team }) {
   return team.users.filter((user) => team.adminIds.includes(user.id));
 }
 
-export function currentUserIsOnTeam({ currentUser, team }) {
-  if (!currentUser) return false;
-  return team.users.some(({ id }) => currentUser.id === id);
+export function userIsOnTeam({ user, team }) {
+  return user && team.users.some(({ id }) => user.id === id);
 }
 
 
