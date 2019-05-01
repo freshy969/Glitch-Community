@@ -13,6 +13,8 @@ import DataLoader from 'Components/data-loader';
 import ProfileContainer from 'Components/profile-container';
 import Emoji from 'Components/images/emoji';
 import TeamUsers from 'Components/team-users';
+import Link from 'Components/link';
+import TooltipContainer from 'Components/tooltips/tooltip-container';
 import { getLink, currentUserIsOnTeam, currentUserIsTeamAdmin } from 'Models/team';
 
 import { AnalyticsContext } from '../segment-analytics';
@@ -44,7 +46,6 @@ export const VerifiedBadge = () => {
   return <TooltipContainer id="verified-team-tooltip" type="info" tooltip={tooltip} target={<img className="verified" src={image} alt="✓" />} />;
 };
 
-
 const TeamMarketing = () => {
   const forPlatformsIcon = 'https://cdn.glitch.com/be1ad2d2-68ab-404a-82f4-6d8e98d28d93%2Ffor-platforms-icon.svg?1506442305188';
   return (
@@ -71,25 +72,27 @@ const TeamNameInput = ({ name, onChange, verified }) => (
 );
 
 const TeamUrlInput = ({ url, onChange }) => (
-  <OptimisticTextInput
-    labelText="Team URL"
-    prefix="@"
-    value={url}
-    onChange={onChange}
-    placeholder="Short url?"
-  />
+  <OptimisticTextInput labelText="Team URL" prefix="@" value={url} onChange={onChange} placeholder="Short url?" />
 );
 
-const TeamNameUrlFields = ({ team, updateName, updateUrl }) => (
-  <>
-    <Heading tagName="h1">
-      <TeamNameInput name={team.name} onChange={updateName} verified={team.isVerified} />
-    </Heading>
-    <p className={styles.teamUrl}>
-      <TeamUrlInput url={team.url} onChange={(url) => updateUrl(url).then(() => syncPageToUrl({ ...team, url }))} />
-    </p>
-  </>
-);
+const TeamProfile = ({ team, isTeamAdmin, updateName, updateUrl }) =>
+  isTeamAdmin ? (
+    <>
+      <Heading tagName="h1">
+        <TeamNameInput name={team.name} onChange={updateName} verified={team.isVerified} />
+      </Heading>
+      <p className={styles.teamUrl}>
+        <TeamUrlInput url={team.url} onChange={(url) => updateUrl(url).then(() => syncPageToUrl({ ...team, url }))} />
+      </p>
+    </>
+  ) : (
+    <>
+      <Heading tagName="h1">
+        {team.name} {team.isVerified && <VerifiedBadge />}
+      </Heading>
+      <p className={styles.teamUrl}>@{team.url}</p>
+    </>
+  );
 
 const TeamPageCollections = ({ collections, team }) => {
   const { currentUser } = useCurrentUser();
@@ -187,16 +190,7 @@ function TeamPage({
             'Upload Avatar': isTeamAdmin ? uploadAvatar : null,
           }}
         >
-          {isTeamAdmin ? (
-            <TeamNameUrlFields team={team} updateName={updateName} updateUrl={updateUrl} />
-          ) : (
-            <>
-              <Heading tagName="h1">
-                {team.name} {team.isVerified && <VerifiedBadge />}
-              </Heading>
-              <p className={styles.teamUrl}>@{team.url}</p>
-            </>
-          )}
+          <TeamProfile team={team} isTeamAdmin={isTeamAdmin} updateName={updateName} updateUrl={updateUrl} />
           <div className={styles.usersInformation}>
             <TeamUsers
               team={team}
@@ -213,9 +207,7 @@ function TeamPage({
         </ProfileContainer>
       </section>
 
-      <ErrorBoundary>
-        {isOnTeam && <AddTeamProject addProject={addProject} teamProjects={team.projects} />}
-      </ErrorBoundary>
+      <ErrorBoundary>{isOnTeam && <AddTeamProject addProject={addProject} teamProjects={team.projects} />}</ErrorBoundary>
 
       {featuredProject && (
         <FeaturedProject
