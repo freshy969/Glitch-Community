@@ -15,8 +15,13 @@ import { useAPI } from '../../state/api';
 
 const WhitelistEmailDomain = ({ domain, onClick }) => (
   <button onClick={onClick} className="button-unstyled result">
-    <WhitelistedDomainIcon domain={domain} />
-    <div>Allow anyone with an @{domain} email to join</div>
+    <div className="add-team-user-pop__whitelist-email-domain">
+      <div className="add-team-user-pop__whitelist-email-image">
+        <WhitelistedDomainIcon domain={domain} />
+      </div>
+
+      <div>Allow anyone with an @{domain} email to join</div>
+    </div>
   </button>
 );
 
