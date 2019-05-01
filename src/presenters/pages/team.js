@@ -3,8 +3,7 @@ import PropTypes from 'prop-types';
 
 import Helmet from 'react-helmet';
 import { partition } from 'lodash';
-import TeamNameInput from 'Components/fields/team-name-input';
-import TeamUrlInput from 'Components/fields/team-url-input';
+import OptimisticTextInput from 'Components/fields/optimistic-text-input';
 import Text from 'Components/text/text';
 import Heading from 'Components/text/heading';
 import FeaturedProject from 'Components/project/featured-project';
@@ -31,13 +30,20 @@ import DeleteTeam from '../includes/delete-team';
 
 import ProjectsLoader from '../projects-loader';
 import TeamAnalytics from '../includes/team-analytics';
-import { VerifiedBadge } from '../includes/team-elements';
 import ReportButton from '../pop-overs/report-abuse-pop';
 import styles from './team.styl';
 
 function syncPageToUrl(team) {
   history.replaceState(null, null, getLink(team));
 }
+
+export const VerifiedBadge = () => {
+  const image = 'https://cdn.glitch.com/55f8497b-3334-43ca-851e-6c9780082244%2Fverified.svg?1501783108220';
+  const tooltip = 'Verified to be supportive, helpful people';
+
+  return <TooltipContainer id="verified-team-tooltip" type="info" tooltip={tooltip} target={<img className="verified" src={image} alt="✓" />} />;
+};
+
 
 const TeamMarketing = () => {
   const forPlatformsIcon = 'https://cdn.glitch.com/be1ad2d2-68ab-404a-82f4-6d8e98d28d93%2Ffor-platforms-icon.svg?1506442305188';
@@ -54,6 +60,25 @@ const TeamMarketing = () => {
   );
 };
 
+const TeamNameInput = ({ name, onChange, verified }) => (
+  <OptimisticTextInput
+    labelText="Team Name"
+    value={name}
+    onChange={onChange}
+    placeholder="What's its name?"
+    postfix={verified ? <VerifiedBadge /> : null}
+  />
+);
+
+const TeamUrlInput = ({ url, onChange }) => (
+  <OptimisticTextInput
+    labelText="Team URL"
+    prefix="@"
+    value={url}
+    onChange={onChange}
+    placeholder="Short url?"
+  />
+);
 
 const TeamNameUrlFields = ({ team, updateName, updateUrl }) => (
   <>
