@@ -6,8 +6,9 @@ import { UserAvatar } from 'Components/images/avatar';
 import { UserLink } from 'Components/link';
 import { getDisplayName } from 'Models/user';
 import { useTracker } from '../../presenters/segment-analytics';
-import AddTeamUserPop from '../../presenters/pop-overs/add-team-user-pop';
 import PopoverWithButton from '../../presenters/pop-overs/popover-with-button';
+
+import AddTeamUserPop from './add-team-user-pop';
 import styles from './styles.styl';
 
 const UserToAdd = ({ user }) => (

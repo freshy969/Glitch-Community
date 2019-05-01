@@ -10,7 +10,7 @@ import Loader from 'Components/loader';
 import WhitelistedDomainIcon from 'Components/whitelisted-domain';
 import { ANON_AVATAR_URL, getAvatarThumbnailUrl, getDisplayName } from 'Models/user';
 import { captureException } from '../../utils/sentry';
-import useDevToggle from '../includes/dev-toggles';
+import useDevToggle from '../../presenters/includes/dev-toggles';
 import { useAPI } from '../../state/api';
 
 const WhitelistEmailDomain = ({ domain, onClick }) => (
