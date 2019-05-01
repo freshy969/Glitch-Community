@@ -31,13 +31,29 @@ import DeleteTeam from '../includes/delete-team';
 
 import ProjectsLoader from '../projects-loader';
 import TeamAnalytics from '../includes/team-analytics';
-import { TeamMarketing, VerifiedBadge } from '../includes/team-elements';
+import { VerifiedBadge } from '../includes/team-elements';
 import ReportButton from '../pop-overs/report-abuse-pop';
 import styles from './team.styl';
 
 function syncPageToUrl(team) {
   history.replaceState(null, null, getLink(team));
 }
+
+const TeamMarketing = () => {
+  const forPlatformsIcon = 'https://cdn.glitch.com/be1ad2d2-68ab-404a-82f4-6d8e98d28d93%2Ffor-platforms-icon.svg?1506442305188';
+  return (
+    <section className="team-marketing">
+      <Text>
+        <img className="for-platforms-icon" src={forPlatformsIcon} alt="fishing emoji" />
+        Want your own team page, complete with detailed app analytics?
+      </Text>
+      <Link to="/teams" className="button button-link has-emoji">
+        About Teams <span className="emoji fishing_pole" role="img" aria-label="emoji" />
+      </Link>
+    </section>
+  );
+};
+
 
 const TeamNameUrlFields = ({ team, updateName, updateUrl }) => (
   <>

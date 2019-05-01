@@ -68,7 +68,11 @@ const WhitelistedDomain = ({ domain, setDomain }) => {
   return (
     <PopoverContainer>
       {({ visible, setVisible }) => (
-        <details onToggle={(evt) => setVisible(evt.target.open)} open={visible} className="popover-container whitelisted-domain-container">
+        <details
+          onToggle={(evt) => setVisible(evt.target.open)}
+          open={visible}
+          className={classnames('popover-container', styles.whitelistedDomainContainer)}
+        >
           <summary>
             <TooltipContainer
               id="whitelisted-domain-tooltip"
@@ -158,7 +162,7 @@ const AddTeamUser = ({ inviteEmail, inviteUser, setWhitelistedDomain, members, i
         </li>
       ))}
       <li className={styles.addUserWrap}>
-        <PopoverWithButton buttonClass={classnames("button-small button-tertiary", styles.addUser)} buttonText="Add" onOpen={track}>
+        <PopoverWithButton buttonClass={classnames('button-small button-tertiary', styles.addUser)} buttonText="Add" onOpen={track}>
           {({ togglePopover }) => (
             <AddTeamUserPop
               members={members}
