@@ -31,13 +31,16 @@ const RemoveFromTeam = ({ onClick }) => {
 
 // Admin Actions Section ⏫⏬
 
-const AdminActions = ({ user, userIsTeamAdmin, updateUserPermissions }) => {
+const AdminActions = ({ user, team, userIsTeamAdmin, updateUserPermissions }) => {
   const onClickRemoveAdmin = useTrackedFunc(() => updateUserPermissions(user.id, MEMBER_ACCESS_LEVEL), 'Remove Admin Status clicked');
   const onClickMakeAdmin = useTrackedFunc(() => updateUserPermissions(user.id, ADMIN_ACCESS_LEVEL), 'Make an Admin clicked');
+  const isAdmin = userIsTeamAdmin({ user, team })
+  const userIsOnlyAdmin = userIsTeamAdmin && team.adminIds.length === 1;
+  
   return (
     <section className="pop-over-actions admin-actions">
       <p className="action-description">Admins can update team info, billing, and remove users</p>
-      {userIsTeamAdmin ? (
+      {isAdmin ? (
         <button className="button-small button-tertiary has-emoji" onClick={onClickRemoveAdmin}>
           Remove Admin Status <span className="emoji fast-down" />
         </button>
@@ -72,14 +75,13 @@ const TeamUserInfo = ({ showRemove, user, team, updateUserPermissions, removeUse
   const { currentUser } = useCurrentUser();
   const userAvatarStyle = { backgroundColor: user.color };
 
-  const currentUserIsTeamAdmin = team.adminIds.includes(currentUser.id);
-  const isTeamAdmin = team.adminIds.includes(user.id);
-  const userIsTheOnlyAdmin = isTeamAdmin && team.adminIds.length === 1;
-  const userIsTheOnlyMember = team.users.length === 1;
+  const currentUserIsTeamAdmin = userIsTeamAdmin({ user: currentUser, team })
+  const selectedUserIsTeamAdmin = userIsTeamAdmin({ user, team })
+  const selectedUserIsOnlyAdmin = selectedUserIsTeamAdmin && team.adminIds.length === 1;
+  const teamHasOnlyOneMember = team.users.length === 1;
 
   const currentUserHasRemovePriveleges = currentUserIsTeamAdmin || (currentUser && currentUser.id === user.id);
-  const canRemoveUser = !(userIsTheOnlyMember || userIsTheOnlyAdmin);
-  const canCurrentUserRemoveUser = canRemoveUser && currentUserHasRemovePriveleges;
+  const canCurrentUserRemoveUser = currentUserHasRemovePriveleges && !teamHasOnlyOneMember && !selectedUserIsOnlyAdmin;
 
   // if user is a member of no projects, skip the confirm step
   function onRemove() {
@@ -105,7 +107,7 @@ const TeamUserInfo = ({ showRemove, user, team, updateUserPermissions, removeUse
               @{user.login}
             </p>
           )}
-          {isTeamAdmin && (
+          {selectedUserIsTeamAdmin && (
             <div className="status-badge">
               <TooltipContainer
                 id={`admin-badge-tooltip-${user.login}`}
@@ -118,8 +120,8 @@ const TeamUserInfo = ({ showRemove, user, team, updateUserPermissions, removeUse
         </div>
       </section>
       {user.thanksCount > 0 && <ThanksCount count={user.thanksCount} />}
-      {currentUserIsTeamAdmin && !userIsTheOnlyAdmin && (
-        <AdminActions user={user} userIsTeamAdmin={isTeamAdmin} updateUserPermissions={updateUserPermissions} />
+      {currentUserIsTeamAdmin && (
+        <AdminActions user={user} team={team} updateUserPermissions={updateUserPermissions} />
       )}
       {canCurrentUserRemoveUser && <RemoveFromTeam onClick={onRemove} />}
     </dialog>

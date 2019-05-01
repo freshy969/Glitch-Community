@@ -52,19 +52,15 @@ export function teamAdmins({ team }) {
 }
 
 export function userIsOnTeam({ user, team }) {
-  return user && team.users.some(({ id }) => user.id === id);
+  return !!user && team.users.some(({ id }) => user.id === id);
 }
 
-
-export function currentUserCanJoinTeam({ currentUser, team }) {
-  team.whitelistedDomain = 'glitch.com'
-  if (!currentUserIsOnTeam({ currentUser, team }) && team.whitelistedDomain && currentUser && currentUser.emails) {
-    return currentUser.emails.some(({ email, verified }) => verified && email.endsWith(`@${team.whitelistedDomain}`));
-  }
-  return false;
+export function userCanJoinTeam({ user, team }) {
+  team.whitelistedDomain = 'glitch.com'; // FIXME
+  if (!user || !user.emails || !team.whitelistedDomain || userIsOnTeam({ user, team })) return false;
+  return user.emails.some(({ email, verified }) => verified && email.endsWith(`@${team.whitelistedDomain}`));
 }
 
-export function currentUserIsTeamAdmin({ currentUser, team }) {
-  if (!currentUser) return false;
-  return team.adminIds.includes(currentUser.id);
+export function userIsTeamAdmin({ user, team }) {
+  return !!user && team.adminIds.includes(user.id);
 }

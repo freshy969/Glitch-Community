@@ -4,7 +4,7 @@ import classnames from 'classnames';
 
 import { UserAvatar } from 'Components/images/avatar';
 import Button from 'Components/buttons/button';
-import { currentUserIsOnTeam, currentUserIsTeamAdmin, currentUserCanJoinTeam } from 'Models/team';
+import { userIsOnTeam, userIsTeamAdmin, userCanJoinTeam } from 'Models/team';
 
 import PopoverWithButton from '../../presenters/pop-overs/popover-with-button';
 import TeamUserInfoPop from '../../presenters/pop-overs/team-user-info-pop';
@@ -53,7 +53,7 @@ TeamUser.propTypes = {
 
 
 const useInvitees = createAPIHook(async (api, team, currentUser) => {
-  if (!currentUserIsOnTeam({ currentUser, team })) return [];
+  if (!userIsOnTeam({ user: currentUser, team })) return [];
   try {
     const data = await Promise.all(team.tokens.map(({ userId }) => api.get(`users/${userId}`)));
     return data.map((user) => user.data).filter((user) => !!user);
@@ -68,9 +68,9 @@ const useInvitees = createAPIHook(async (api, team, currentUser) => {
 const TeamUsersContainer = ({ team, updateWhitelistedDomain, inviteEmail, inviteUser, joinTeam, removeUserFromTeam, updateUserPermissions }) => {
   const { currentUser } = useCurrentUser();
   const { value: invitees } = useInvitees(team, currentUser);
-  const isAdmin = currentUserIsTeamAdmin({ currentUser, team });
-  const isOnTeam = currentUserIsOnTeam({ currentUser, team });
-  const canJoinTeam = currentUserCanJoinTeam({ currentUser, team });
+  const isAdmin = userIsTeamAdmin({ user: currentUser, team });
+  const isOnTeam = userIsOnTeam({ user: currentUser, team });
+  const canJoinTeam = userCanJoinTeam({ user: currentUser, team });
   return (
     <ul className={styles.container}>
       {team.users.map((user, i) => (

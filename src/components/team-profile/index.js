@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import OptimisticTextInput from 'Components/fields/optimistic-text-input';
 import Heading from 'Components/text/heading';
 import VerifiedBadge from 'Components/verified-badge';
-import { getLink, currentUserIsTeamAdmin } from 'Models/team';
+import { getLink, userIsTeamAdmin } from 'Models/team';
 import { useCurrentUser } from '../../state/current-user';
 
 import styles from './styles.styl';
@@ -29,7 +29,7 @@ const TeamUrlInput = ({ url, onChange }) => (
 
 const TeamProfile = ({ team, updateName, updateUrl }) => {
   const { currentUser } = useCurrentUser();
-  const isTeamAdmin = currentUserIsTeamAdmin({ currentUser, team });
+  const isTeamAdmin = userIsTeamAdmin({ user: currentUser, team });
   return isTeamAdmin ? (
     <>
       <Heading tagName="h1">

@@ -14,7 +14,7 @@ import Emoji from 'Components/images/emoji';
 import Button from 'Components/buttons/button';
 import TeamUsers from 'Components/team-users';
 import TeamProfile from 'Components/team-profile';
-import { currentUserIsOnTeam, currentUserIsTeamAdmin } from 'Models/team';
+import { userIsOnTeam, userIsTeamAdmin } from 'Models/team';
 
 import { AnalyticsContext } from '../segment-analytics';
 import { useAPI } from '../../state/api';
@@ -56,7 +56,7 @@ const TeamPageCollections = ({ collections, team }) => {
       title="Collections"
       collections={collections.map((collection) => ({ ...collection, team }))}
       maybeTeam={team}
-      isAuthorized={currentUserIsOnTeam({ currentUser, team })}
+      isAuthorized={userIsOnTeam({ user: currentUser, team })}
     />
   );
 };
@@ -114,15 +114,15 @@ function TeamPage({
 
   const addProjectToCollection = (project, collection) => api.patch(`collections/${collection.id}/add/${project.id}`);
   const featuredProject = team.projects.find(({ id }) => id === team.featuredProjectId);
-  const isTeamAdmin = currentUserIsTeamAdmin({ currentUser, team });
-  const isOnTeam = currentUserIsOnTeam({ currentUser, team });
+  const isTeamAdmin = userIsTeamAdmin({ user: currentUser, team });
+  const isOnTeam = userIsOnTeam({ user: currentUser, team });
 
   const projectOptions = {
     addProjectToCollection,
     deleteProject,
     leaveTeamProject,
   };
-  if (currentUserIsOnTeam({ currentUser, team })) {
+  if (isOnTeam) {
     Object.assign(projectOptions, {
       removeProjectFromTeam: removeProject,
       joinTeamProject,
