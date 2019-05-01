@@ -58,6 +58,7 @@ export function currentUserIsOnTeam({ currentUser, team }) {
 
 
 export function currentUserCanJoinTeam({ currentUser, team }) {
+  team.whitelistedDomain = 'glitch.com'
   if (!currentUserIsOnTeam({ currentUser, team }) && team.whitelistedDomain && currentUser && currentUser.emails) {
     return currentUser.emails.some(({ email, verified }) => verified && email.endsWith(`@${team.whitelistedDomain}`));
   }
