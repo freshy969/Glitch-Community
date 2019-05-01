@@ -27,39 +27,38 @@ const adminStatusDisplay = (adminIds, user) => {
   return '';
 };
 
-const TeamUsers = ({ users, team, removeUserFromTeam, updateUserPermissions }) => (
-  <ul className="users">
-    {users.map((user) => (
-      <li key={user.id}>
-        <PopoverWithButton
-          buttonClass="user button-unstyled tooltip-container-button"
-          buttonText={<UserAvatar user={user} suffix={adminStatusDisplay(team.adminIds, user)} withinButton />}
-        >
-          {({ togglePopover }) => (
-            <TeamUserInfoPop
-              team={team}
-              removeUserFromTeam={removeUserFromTeam}
-              user={user}
-              updateUserPermissions={updateUserPermissions}
-              togglePopover={togglePopover}
-            />
-          )}
-        </PopoverWithButton>
-      </li>
-    ))}
-  </ul>
-);
+const TeamUser = ({ user, team, removeUserFromTeam, updateUserPermissions }) => (
+  <PopoverWithButton
+    buttonClass="user button-unstyled tooltip-container-button"
+    buttonText={<UserAvatar user={user} suffix={adminStatusDisplay(team.adminIds, user)} withinButton />}
+  >
+    {({ togglePopover }) => (
+      <TeamUserInfoPop
+        team={team}
+        removeUserFromTeam={removeUserFromTeam}
+        user={user}
+        updateUserPermissions={updateUserPermissions}
+        togglePopover={togglePopover}
+      />
+    )}
+  </PopoverWithButton>
+)
 
-TeamUsers.propTypes = {
-  users: PropTypes.arrayOf(
-    PropTypes.shape({
+
+TeamUser.propTypes = {
+  user: PropTypes.shape({
       id: PropTypes.number.isRequired,
-    }),
-  ).isRequired,
+    }).isRequired,
   removeUserFromTeam: PropTypes.func.isRequired,
   updateUserPermissions: PropTypes.func.isRequired,
   team: PropTypes.object.isRequired,
 };
+
+const UserToAdd = ({ user }) => (
+  <UserLink user={user} className="user">
+    <UserAvatar user={user} />
+  </UserLink>
+)
 
 // Whitelisted domain icon
 
@@ -150,15 +149,7 @@ const AddTeamUser = ({ inviteEmail, inviteUser, setWhitelistedDomain, members, i
 
   return (
     <span className="add-user-container">
-      <ul className="users">
-        {alreadyInvitedAndNewInvited.map((user) => (
-          <li key={user.id}>
-            <UserLink user={user} className="user">
-              <UserAvatar user={user} />
-            </UserLink>
-          </li>
-        ))}
-      </ul>
+      <UsersToAdd users={alreadyInvitedAndNewInvited} />
       <span className="add-user-wrap">
         <PopoverWithButton buttonClass="button-small button-tertiary add-user" buttonText="Add" onOpen={track}>
           {({ togglePopover }) => (
@@ -221,7 +212,7 @@ const TeamUsersContainer = ({ team, updateWhitelistedDomain, inviteEmail, invite
   const { value: invitees } = useInvitees(team, currentUser);
   const isAdmin = currentUserIsTeamAdmin({ currentUser, team });
   return (
-    <div className={styles.container}>
+    <ul className={styles.container}>
       <TeamUsers team={team} users={team.users} removeUserFromTeam={removeUserFromTeam} updateUserPermissions={updateUserPermissions} />
       {!!team.whitelistedDomain && <WhitelistedDomain domain={team.whitelistedDomain} setDomain={isAdmin ? updateWhitelistedDomain : null} />}
       {currentUserIsOnTeam({ currentUser, team }) && (
@@ -235,7 +226,7 @@ const TeamUsersContainer = ({ team, updateWhitelistedDomain, inviteEmail, invite
         />
       )}
       {currentUserCanJoinTeam({ currentUser, team }) && <JoinTeam onClick={joinTeam} />}
-    </div>
+    </ul>
   );
 };
 export default TeamUsersContainer;
