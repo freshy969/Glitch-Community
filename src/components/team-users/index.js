@@ -15,7 +15,8 @@ import PopoverContainer from '../../presenters/pop-overs/popover-container';
 import TeamUserInfoPop from '../../presenters/pop-overs/team-user-info-pop';
 import { useCurrentUser } from '../../state/current-user';
 import { createAPIHook } from '../../state/api';
-// import { captureException } from '../../utils/sentry';
+import { captureException } from '../../utils/sentry';
+import styles from './styles.styl';
 
 // Team Users list (in profile container)
 
@@ -202,11 +203,17 @@ export const JoinTeam = ({ onClick }) => (
   </button>
 );
 
-// TODO: captureException
 const useInvitees = createAPIHook(async (api, team, currentUser) => {
   if (!currentUserIsOnTeam({ currentUser, team })) return [];
-  const data = await Promise.all(team.tokens.map(({ userId }) => api.get(`users/${userId}`)));
-  return data.map((user) => user.data).filter((user) => !!user);
+  try {
+    const data = await Promise.all(team.tokens.map(({ userId }) => api.get(`users/${userId}`)));
+    return data.map((user) => user.data).filter((user) => !!user);
+  } catch (error) {
+    if (error && error.response && error.response.status !== 404) {
+      captureException(error);
+    }
+    return [];
+  }
 });
 
 const TeamUsersContainer = ({ team, updateWhitelistedDomain, inviteEmail, inviteUser, joinTeam, removeUserFromTeam, updateUserPermissions }) => {
@@ -214,7 +221,7 @@ const TeamUsersContainer = ({ team, updateWhitelistedDomain, inviteEmail, invite
   const { value: invitees } = useInvitees(team, currentUser);
   const isAdmin = currentUserIsTeamAdmin({ currentUser, team });
   return (
-    <>
+    <div className={styles.container}>
       <TeamUsers team={team} users={team.users} removeUserFromTeam={removeUserFromTeam} updateUserPermissions={updateUserPermissions} />
       {!!team.whitelistedDomain && <WhitelistedDomain domain={team.whitelistedDomain} setDomain={isAdmin ? updateWhitelistedDomain : null} />}
       {currentUserIsOnTeam({ currentUser, team }) && (
@@ -228,7 +235,7 @@ const TeamUsersContainer = ({ team, updateWhitelistedDomain, inviteEmail, invite
         />
       )}
       {currentUserCanJoinTeam({ currentUser, team }) && <JoinTeam onClick={joinTeam} />}
-    </>
+    </div>
   );
 };
 export default TeamUsersContainer;
