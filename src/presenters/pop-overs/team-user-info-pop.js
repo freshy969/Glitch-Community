@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 import { getAvatarThumbnailUrl, getDisplayName } from 'Models/user';
+import { userIsTeamAdmin, userIsOnlyTeamAdmin } from 'Models/team';
 import TooltipContainer from 'Components/tooltips/tooltip-container';
 import { UserLink } from 'Components/link';
 import Thanks from 'Components/thanks';
@@ -31,16 +32,16 @@ const RemoveFromTeam = ({ onClick }) => {
 
 // Admin Actions Section ⏫⏬
 
-const AdminActions = ({ user, team, userIsTeamAdmin, updateUserPermissions }) => {
+const AdminActions = ({ user, team, updateUserPermissions }) => {
   const onClickRemoveAdmin = useTrackedFunc(() => updateUserPermissions(user.id, MEMBER_ACCESS_LEVEL), 'Remove Admin Status clicked');
   const onClickMakeAdmin = useTrackedFunc(() => updateUserPermissions(user.id, ADMIN_ACCESS_LEVEL), 'Make an Admin clicked');
-  const isAdmin = userIsTeamAdmin({ user, team })
-  const userIsOnlyAdmin = userIsTeamAdmin && team.adminIds.length === 1;
-  
+
+  if (userIsOnlyTeamAdmin({ user, team })) return null;
+
   return (
     <section className="pop-over-actions admin-actions">
       <p className="action-description">Admins can update team info, billing, and remove users</p>
-      {isAdmin ? (
+      {userIsTeamAdmin({ user, team }) ? (
         <button className="button-small button-tertiary has-emoji" onClick={onClickRemoveAdmin}>
           Remove Admin Status <span className="emoji fast-down" />
         </button>
@@ -57,7 +58,7 @@ AdminActions.propTypes = {
   user: PropTypes.shape({
     id: PropTypes.number.isRequired,
   }).isRequired,
-  userIsTeamAdmin: PropTypes.bool.isRequired,
+  team: PropTypes.object.isRequired,
   updateUserPermissions: PropTypes.func.isRequired,
 };
 
@@ -75,9 +76,9 @@ const TeamUserInfo = ({ showRemove, user, team, updateUserPermissions, removeUse
   const { currentUser } = useCurrentUser();
   const userAvatarStyle = { backgroundColor: user.color };
 
-  const currentUserIsTeamAdmin = userIsTeamAdmin({ user: currentUser, team })
-  const selectedUserIsTeamAdmin = userIsTeamAdmin({ user, team })
-  const selectedUserIsOnlyAdmin = selectedUserIsTeamAdmin && team.adminIds.length === 1;
+  const currentUserIsTeamAdmin = userIsTeamAdmin({ user: currentUser, team });
+  const selectedUserIsTeamAdmin = userIsTeamAdmin({ user, team });
+  const selectedUserIsOnlyAdmin = userIsOnlyTeamAdmin({ user, team });
   const teamHasOnlyOneMember = team.users.length === 1;
 
   const currentUserHasRemovePriveleges = currentUserIsTeamAdmin || (currentUser && currentUser.id === user.id);
@@ -120,9 +121,7 @@ const TeamUserInfo = ({ showRemove, user, team, updateUserPermissions, removeUse
         </div>
       </section>
       {user.thanksCount > 0 && <ThanksCount count={user.thanksCount} />}
-      {currentUserIsTeamAdmin && (
-        <AdminActions user={user} team={team} updateUserPermissions={updateUserPermissions} />
-      )}
+      {currentUserIsTeamAdmin && <AdminActions user={user} team={team} updateUserPermissions={updateUserPermissions} />}
       {canCurrentUserRemoveUser && <RemoveFromTeam onClick={onRemove} />}
     </dialog>
   );
