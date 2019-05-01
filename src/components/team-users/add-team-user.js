@@ -59,8 +59,8 @@ const AddTeamUser = ({ inviteEmail, inviteUser, setWhitelistedDomain, members, i
   return (
     <>
       {alreadyInvitedAndNewInvited.map((user) => (
-        <li key={user.id}>
-          <UserToAdd users={user} />
+        <li key={user.id} className={styles.userToAddWrap}>
+          <UserToAdd user={user} />
         </li>
       ))}
       <li className={styles.addUserWrap}>
