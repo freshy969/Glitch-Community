@@ -7,12 +7,11 @@ import randomColor from 'randomcolor';
 
 import Thanks from 'Components/thanks';
 import Loader from 'Components/loader';
+import { WhitelistEmailDomain } from 'Components/whitelisted-domain';
 import { ANON_AVATAR_URL, getAvatarThumbnailUrl, getDisplayName } from 'Models/user';
 import { captureException } from '../../utils/sentry';
 import useDevToggle from '../includes/dev-toggles';
 import { useAPI } from '../../state/api';
-
-import { WhitelistedDomainIcon } from '../includes/team-elements';
 
 const UserResultItem = ({ user, action }) => {
   const name = getDisplayName(user);
@@ -65,18 +64,6 @@ class InviteByEmail extends React.Component {
 
 InviteByEmail.propTypes = {
   email: PropTypes.string.isRequired,
-  onClick: PropTypes.func.isRequired,
-};
-
-const WhitelistEmailDomain = ({ domain, onClick }) => (
-  <button onClick={onClick} className="button-unstyled result">
-    <WhitelistedDomainIcon domain={domain} />
-    <div>Allow anyone with an @{domain} email to join</div>
-  </button>
-);
-
-WhitelistEmailDomain.propTypes = {
-  domain: PropTypes.string.isRequired,
   onClick: PropTypes.func.isRequired,
 };
 

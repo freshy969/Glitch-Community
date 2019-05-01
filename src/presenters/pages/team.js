@@ -39,7 +39,7 @@ function syncPageToUrl(team) {
   history.replaceState(null, null, getLink(team));
 }
 
-export const VerifiedBadge = () => {
+const VerifiedBadge = () => {
   const image = 'https://cdn.glitch.com/55f8497b-3334-43ca-851e-6c9780082244%2Fverified.svg?1501783108220';
   const tooltip = 'Verified to be supportive, helpful people';
 
