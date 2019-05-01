@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { uniqBy } from 'lodash';
 
 import TooltipContainer from 'Components/tooltips/tooltip-container';
 import { UserAvatar } from 'Components/images/avatar';
 import { UserLink } from 'Components/link';
+import Button from 'Components/buttons/button';
 import { getDisplayName } from 'Models/user';
 import { currentUserIsOnTeam, currentUserIsTeamAdmin, currentUserCanJoinTeam } from 'Models/team';
 import { useTracker } from '../../presenters/segment-analytics';
@@ -42,13 +43,12 @@ const TeamUser = ({ user, team, removeUserFromTeam, updateUserPermissions }) => 
       />
     )}
   </PopoverWithButton>
-)
-
+);
 
 TeamUser.propTypes = {
   user: PropTypes.shape({
-      id: PropTypes.number.isRequired,
-    }).isRequired,
+    id: PropTypes.number.isRequired,
+  }).isRequired,
   removeUserFromTeam: PropTypes.func.isRequired,
   updateUserPermissions: PropTypes.func.isRequired,
   team: PropTypes.object.isRequired,
@@ -58,7 +58,7 @@ const UserToAdd = ({ user }) => (
   <UserLink user={user} className="user">
     <UserAvatar user={user} />
   </UserLink>
-)
+);
 
 // Whitelisted domain icon
 
@@ -110,8 +110,8 @@ WhitelistedDomain.defaultProps = {
 // Add Team User
 
 const AddTeamUser = ({ inviteEmail, inviteUser, setWhitelistedDomain, members, invitedMembers, whitelistedDomain }) => {
-  const [invitee, setInvitee] = React.useState('');
-  const [newlyInvited, setNewlyInvited] = React.useState([]);
+  const [invitee, setInvitee] = useState('');
+  const [newlyInvited, setNewlyInvited] = useState([]);
 
   const alreadyInvitedAndNewInvited = uniqBy(invitedMembers.concat(newlyInvited), (user) => user.id);
   const track = useTracker('Add to Team clicked');
@@ -147,10 +147,16 @@ const AddTeamUser = ({ inviteEmail, inviteUser, setWhitelistedDomain, members, i
     setInvitee('');
   };
 
+  // add-user-container add-user-wrap
+
   return (
-    <span className="add-user-container">
-      <UsersToAdd users={alreadyInvitedAndNewInvited} />
-      <span className="add-user-wrap">
+    <>
+      {alreadyInvitedAndNewInvited.map((user) => (
+        <li key={user.id}>
+          <UserToAdd users={user} />
+        </li>
+      ))}
+      <li>
         <PopoverWithButton buttonClass="button-small button-tertiary add-user" buttonText="Add" onOpen={track}>
           {({ togglePopover }) => (
             <AddTeamUserPop
@@ -167,8 +173,8 @@ const AddTeamUser = ({ inviteEmail, inviteUser, setWhitelistedDomain, members, i
             Invited {invitee}
           </div>
         )}
-      </span>
-    </span>
+      </li>
+    </>
   );
 };
 AddTeamUser.propTypes = {
@@ -185,14 +191,6 @@ AddTeamUser.defaultProps = {
   inviteEmail: null,
   whitelistedDomain: null,
 };
-
-// Join Team
-
-export const JoinTeam = ({ onClick }) => (
-  <button className="button button-small button-cta join-team-button" onClick={onClick}>
-    Join Team
-  </button>
-);
 
 const useInvitees = createAPIHook(async (api, team, currentUser) => {
   if (!currentUserIsOnTeam({ currentUser, team })) return [];
@@ -211,11 +209,22 @@ const TeamUsersContainer = ({ team, updateWhitelistedDomain, inviteEmail, invite
   const { currentUser } = useCurrentUser();
   const { value: invitees } = useInvitees(team, currentUser);
   const isAdmin = currentUserIsTeamAdmin({ currentUser, team });
+  const isOnTeam = currentUserIsOnTeam({ currentUser, team });
+  const canJoinTeam = currentUserCanJoinTeam({ currentUser, team });
   return (
     <ul className={styles.container}>
-      <TeamUsers team={team} users={team.users} removeUserFromTeam={removeUserFromTeam} updateUserPermissions={updateUserPermissions} />
-      {!!team.whitelistedDomain && <WhitelistedDomain domain={team.whitelistedDomain} setDomain={isAdmin ? updateWhitelistedDomain : null} />}
-      {currentUserIsOnTeam({ currentUser, team }) && (
+      {team.users.map((user) => (
+        <li key={user.id}>
+          <TeamUser team={team} user={user} removeUserFromTeam={removeUserFromTeam} updateUserPermissions={updateUserPermissions} />
+        </li>
+      ))}
+
+      {!!team.whitelistedDomain && (
+        <li>
+          <WhitelistedDomain domain={team.whitelistedDomain} setDomain={isAdmin ? updateWhitelistedDomain : null} />
+        </li>
+      )}
+      {isOnTeam && (
         <AddTeamUser
           inviteEmail={inviteEmail}
           inviteUser={inviteUser}
@@ -225,7 +234,13 @@ const TeamUsersContainer = ({ team, updateWhitelistedDomain, inviteEmail, invite
           whitelistedDomain={team.whitelistedDomain}
         />
       )}
-      {currentUserCanJoinTeam({ currentUser, team }) && <JoinTeam onClick={joinTeam} />}
+      {canJoinTeam && (
+        <li>
+          <Button size="small" type="cta" onClick={joinTeam}>
+            Join Team
+          </Button>
+        </li>
+      )}
     </ul>
   );
 };
