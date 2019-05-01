@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { uniqBy } from 'lodash';
+import classnames from 'classnames';
 
 import TooltipContainer from 'Components/tooltips/tooltip-container';
 import { UserAvatar } from 'Components/images/avatar';
@@ -156,8 +157,8 @@ const AddTeamUser = ({ inviteEmail, inviteUser, setWhitelistedDomain, members, i
           <UserToAdd users={user} />
         </li>
       ))}
-      <li>
-        <PopoverWithButton buttonClass="button-small button-tertiary add-user" buttonText="Add" onOpen={track}>
+      <li className={styles.addUserWrap}>
+        <PopoverWithButton buttonClass={classnames("button-small button-tertiary", styles.addUser)} buttonText="Add" onOpen={track}>
           {({ togglePopover }) => (
             <AddTeamUserPop
               members={members}
@@ -213,8 +214,8 @@ const TeamUsersContainer = ({ team, updateWhitelistedDomain, inviteEmail, invite
   const canJoinTeam = currentUserCanJoinTeam({ currentUser, team });
   return (
     <ul className={styles.container}>
-      {team.users.map((user) => (
-        <li key={user.id} className={styles.teamUserWrap}>
+      {team.users.map((user, i) => (
+        <li key={user.id} className={classnames(styles.teamUserWrap, i === team.users.length - 1 && styles.lastTeamUser)}>
           <TeamUser team={team} user={user} removeUserFromTeam={removeUserFromTeam} updateUserPermissions={updateUserPermissions} />
         </li>
       ))}

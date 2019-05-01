@@ -1,15 +1,16 @@
-.users
-  display: inline
-  margin-right: 5px
-  padding: 1px 0 0;
-  vertical-align: middle
-  
 .teamUserWrap
   margin-right: -7px
-
-.teamUserWrap + :not(.teamUserWrap)
-  margin-left: 7px
+  &.lastTeamUser
+    margin-right: 0
+    
+.addUserWrap
+  margin-left: 5px  
+  :global .success
+    background-color: success-background
   
+.addUser
+  transition: all .2s
+    
 .container
   margin: 0
   padding: 0
@@ -24,22 +25,7 @@
       margin-top: 5px
       margin-right: 5px
       margin-left: 5px
-    .add-user-container
-      position: relative
-      vertical-align: top
-      margin-left: 5px
-      .users
-        li:last-of-type
-          margin-right: 0px
-        img
-          opacity: 0.5
-      .add-user-wrap
-        position: relative
-      .add-user
-        margin-top: 4px
-        transition: all .2s
-      .success
-        background-color: success-background
+        
     .join-team-button
       vertical-align: top
       margin-top: 3px
