@@ -30,7 +30,7 @@ const adminStatusDisplay = (adminIds, user) => {
 
 const TeamUser = ({ user, team, removeUserFromTeam, updateUserPermissions }) => (
   <PopoverWithButton
-    buttonClass="user button-unstyled tooltip-container-button"
+    buttonClass="button-unstyled tooltip-container-button"
     buttonText={<UserAvatar user={user} suffix={adminStatusDisplay(team.adminIds, user)} withinButton />}
   >
     {({ togglePopover }) => (
@@ -55,7 +55,7 @@ TeamUser.propTypes = {
 };
 
 const UserToAdd = ({ user }) => (
-  <UserLink user={user} className="user">
+  <UserLink user={user}>
     <UserAvatar user={user} />
   </UserLink>
 );
@@ -214,7 +214,7 @@ const TeamUsersContainer = ({ team, updateWhitelistedDomain, inviteEmail, invite
   return (
     <ul className={styles.container}>
       {team.users.map((user) => (
-        <li key={user.id}>
+        <li key={user.id} className={styles.teamUserWrap}>
           <TeamUser team={team} user={user} removeUserFromTeam={removeUserFromTeam} updateUserPermissions={updateUserPermissions} />
         </li>
       ))}
