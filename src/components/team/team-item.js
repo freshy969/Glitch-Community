@@ -8,10 +8,9 @@ import Cover from 'Components/search-result-cover-bar';
 import Image from 'Components/images/image';
 import Thanks from 'Components/thanks';
 import ProfileList from 'Components/profile-list';
+import VerifiedBadge from 'Components/verified-badge';
 import { getLink, getAvatarUrl, DEFAULT_TEAM_AVATAR } from 'Models/team';
-import { VerifiedBadge } from '../../presenters/includes/team-elements';
 import WrappingLink from '../../presenters/includes/wrapping-link';
-
 import styles from './team-item.styl';
 
 const ProfileAvatar = ({ team }) => <Image className={styles.avatar} src={getAvatarUrl(team)} defaultSrc={DEFAULT_TEAM_AVATAR} alt="" />;

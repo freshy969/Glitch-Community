@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import classnames from 'classnames';
 
 import Image from 'Components/images/image';
 import styles from './styles.styl';
@@ -20,17 +19,8 @@ const WhitelistedDomainIcon = ({ domain }) => {
   );
 };
 
-// Whitelisted domain icon
-
-
-export const WhitelistEmailDomain = ({ domain, onClick }) => (
-  <button onClick={onClick} className="button-unstyled result">
-    <WhitelistedDomainIcon domain={domain} />
-    <div>Allow anyone with an @{domain} email to join</div>
-  </button>
-);
-
-WhitelistEmailDomain.propTypes = {
+WhitelistedDomainIcon.propTypes = {
   domain: PropTypes.string.isRequired,
-  onClick: PropTypes.func.isRequired,
 };
+
+export default WhitelistedDomainIcon;

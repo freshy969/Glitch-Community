@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { uniqBy } from 'lodash';
 import classnames from 'classnames';
@@ -8,6 +8,7 @@ import { UserAvatar } from 'Components/images/avatar';
 import { UserLink } from 'Components/link';
 import Button from 'Components/buttons/button';
 import Emoji from 'Components/images/emoji';
+import WhitelistedDomainIcon from 'Components/whitelisted-domain';
 import { getDisplayName } from 'Models/user';
 import { currentUserIsOnTeam, currentUserIsTeamAdmin, currentUserCanJoinTeam } from 'Models/team';
 import { useTracker } from '../../presenters/segment-analytics';
@@ -61,6 +62,57 @@ const UserToAdd = ({ user }) => (
   </UserLink>
 );
 
+// Whitelisted Domains
+
+export const WhitelistedDomain = ({ domain, setDomain }) => {
+  const tooltip = `Anyone with an @${domain} email can join`;
+  return (
+    <PopoverContainer>
+      {({ visible, setVisible }) => (
+        <details
+          onToggle={(evt) => setVisible(evt.target.open)}
+          open={visible}
+          className={classnames('popover-container', styles.whitelistedDomainContainer)}
+        >
+          <summary>
+            <TooltipContainer
+              id="whitelisted-domain-tooltip"
+              type="action"
+              tooltip={visible ? null : tooltip}
+              target={
+                <div>
+                  <WhitelistedDomainIcon domain={domain} />
+                </div>
+              }
+            />
+          </summary>
+          <dialog className="pop-over">
+            <section className="pop-over-info">
+              <p className="info-description">{tooltip}</p>
+            </section>
+            {!!setDomain && (
+              <section className="pop-over-actions danger-zone">
+                <Button type="dangerZone" onClick={() => setDomain(null)}>
+                  Remove {domain} <Emoji name="bomb" />
+                </Button>
+              </section>
+            )}
+          </dialog>
+        </details>
+      )}
+    </PopoverContainer>
+  );
+};
+
+WhitelistedDomain.propTypes = {
+  domain: PropTypes.string.isRequired,
+  setDomain: PropTypes.func,
+};
+
+WhitelistedDomain.defaultProps = {
+  setDomain: null,
+};
+
 
 // Add Team User
 
@@ -112,7 +164,7 @@ const AddTeamUser = ({ inviteEmail, inviteUser, setWhitelistedDomain, members, i
         </li>
       ))}
       <li className={styles.addUserWrap}>
-        <PopoverWithButton buttonClass={classnames('button-small button-tertiary', styles.addUser)} buttonText="Add" onOpen={track}>
+        <PopoverWithButton buttonClass="button-small button-tertiary" buttonText="Add" onOpen={track}>
           {({ togglePopover }) => (
             <AddTeamUserPop
               members={members}

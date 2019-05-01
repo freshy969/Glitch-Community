@@ -14,7 +14,7 @@ import ProfileContainer from 'Components/profile-container';
 import Emoji from 'Components/images/emoji';
 import TeamUsers from 'Components/team-users';
 import Link from 'Components/link';
-import TooltipContainer from 'Components/tooltips/tooltip-container';
+import VerifiedBadge from 'Components/verified-badge';
 import { getLink, currentUserIsOnTeam, currentUserIsTeamAdmin } from 'Models/team';
 
 import { AnalyticsContext } from '../segment-analytics';
@@ -38,13 +38,6 @@ import styles from './team.styl';
 function syncPageToUrl(team) {
   history.replaceState(null, null, getLink(team));
 }
-
-const VerifiedBadge = () => {
-  const image = 'https://cdn.glitch.com/55f8497b-3334-43ca-851e-6c9780082244%2Fverified.svg?1501783108220';
-  const tooltip = 'Verified to be supportive, helpful people';
-
-  return <TooltipContainer id="verified-team-tooltip" type="info" tooltip={tooltip} target={<img className="verified" src={image} alt="✓" />} />;
-};
 
 const TeamMarketing = () => {
   const forPlatformsIcon = 'https://cdn.glitch.com/be1ad2d2-68ab-404a-82f4-6d8e98d28d93%2Ffor-platforms-icon.svg?1506442305188';
